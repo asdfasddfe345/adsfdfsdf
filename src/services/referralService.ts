@@ -78,6 +78,24 @@ class ReferralService {
   }
 
   async deleteListing(id: string): Promise<boolean> {
+    const { error: slotsError } = await supabase
+      .from('referral_consultation_slots')
+      .delete()
+      .eq('referral_listing_id', id);
+
+    if (slotsError) {
+      console.error('ReferralService: Error deleting related slots:', slotsError.message);
+    }
+
+    const { error: purchasesError } = await supabase
+      .from('referral_purchases')
+      .delete()
+      .eq('referral_listing_id', id);
+
+    if (purchasesError) {
+      console.error('ReferralService: Error deleting related purchases:', purchasesError.message);
+    }
+
     const { error } = await supabase
       .from('referral_listings')
       .delete()

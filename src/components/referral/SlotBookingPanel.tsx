@@ -9,10 +9,12 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
+  IndianRupee,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { referralService } from '../../services/referralService';
-import type { ReferralSlotDisplayInfo, ReferralSlotType } from '../../types/referral';
+import { RAZORPAY_CONFIG } from '../../utils/razorpayConfig';
+import type { ReferralSlotDisplayInfo, ReferralSlotType, ReferralPricing } from '../../types/referral';
 
 interface SlotBookingPanelProps {
   listingId: string;
@@ -24,6 +26,15 @@ interface SlotBookingPanelProps {
   onShowAuth: (callback?: () => void) => void;
 }
 
+const getSlotPrice = (pricing: ReferralPricing, slotType: ReferralSlotType): number => {
+  switch (slotType) {
+    case 'query': return pricing.query_price;
+    case 'profile': return pricing.profile_price;
+    case 'consultation': return pricing.slot_price;
+    default: return pricing.slot_price;
+  }
+};
+
 export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
   listingId,
   slotType,
@@ -34,6 +45,7 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
   onShowAuth,
 }) => {
   const { isAuthenticated, user } = useAuth();
+  const [pricing, setPricing] = useState<ReferralPricing | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [slots, setSlots] = useState<ReferralSlotDisplayInfo[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -42,6 +54,10 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
   const [bookingForm, setBookingForm] = useState({ name: '', email: '', phone: '' });
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    referralService.getPricing().then(setPricing);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -67,12 +83,44 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
     loadSlots(dateStr);
   };
 
+  const openRazorpay = (amountPaise: number): Promise<{ success: boolean; paymentId?: string; error?: string }> => {
+    return new Promise((resolve) => {
+      const options = {
+        key: RAZORPAY_CONFIG.KEY_ID,
+        amount: amountPaise,
+        currency: RAZORPAY_CONFIG.CURRENCY,
+        name: RAZORPAY_CONFIG.COMPANY_NAME,
+        description: `${title} - Slot Booking`,
+        prefill: {
+          name: bookingForm.name,
+          email: bookingForm.email,
+          contact: bookingForm.phone || undefined,
+        },
+        theme: { color: RAZORPAY_CONFIG.THEME_COLOR },
+        handler: (response: { razorpay_payment_id: string }) => {
+          resolve({ success: true, paymentId: response.razorpay_payment_id });
+        },
+        modal: {
+          ondismiss: () => {
+            resolve({ success: false, error: 'Payment cancelled.' });
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', (response: any) => {
+        resolve({ success: false, error: response.error?.description || 'Payment failed.' });
+      });
+      rzp.open();
+    });
+  };
+
   const handleBookSlot = async () => {
     if (!isAuthenticated) {
       onShowAuth();
       return;
     }
-    if (!user?.id || !selectedDate || !selectedSlot) return;
+    if (!user?.id || !selectedDate || !selectedSlot || !pricing) return;
     if (!bookingForm.name || !bookingForm.email) {
       setErrorMessage('Name and email are required.');
       return;
@@ -80,6 +128,17 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
 
     setBookingStatus('processing');
     setErrorMessage('');
+
+    const amountPaise = getSlotPrice(pricing, slotType);
+
+    if (amountPaise > 0) {
+      const paymentResult = await openRazorpay(amountPaise);
+      if (!paymentResult.success) {
+        setBookingStatus('idle');
+        setErrorMessage(paymentResult.error || 'Payment was not completed.');
+        return;
+      }
+    }
 
     const result = await referralService.bookSlot(
       user.id,
@@ -113,10 +172,12 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const priceDisplay = pricing ? getSlotPrice(pricing, slotType) / 100 : 0;
+
   if (bookingStatus === 'success') {
     return (
       <div className="text-center py-8">
-        <div className={`w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4`}>
+        <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-emerald-400" />
         </div>
         <h3 className="text-white font-bold text-xl mb-2">Slot Booked!</h3>
@@ -124,7 +185,7 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
           Your {title.toLowerCase()} session has been confirmed.
         </p>
         <p className="text-slate-500 text-xs mb-4">
-          We will collect your details and connect you for the call.
+          We will connect you for the call at your scheduled time.
         </p>
         <button
           onClick={() => {
@@ -141,14 +202,23 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <div className={`w-10 h-10 rounded-lg ${accentColor} flex items-center justify-center`}>
-          {icon}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-lg ${accentColor} flex items-center justify-center`}>
+            {icon}
+          </div>
+          <div>
+            <h3 className="text-white font-bold">{title}</h3>
+            <p className="text-slate-400 text-xs">{subtitle}</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-white font-bold">{title}</h3>
-          <p className="text-slate-400 text-xs">{subtitle}</p>
-        </div>
+        {pricing && priceDisplay > 0 && (
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <IndianRupee className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-emerald-400 font-bold text-sm">{priceDisplay}</span>
+            <span className="text-slate-500 text-xs">/slot</span>
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -311,7 +381,9 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
                     ) : (
                       <>
                         <Calendar className="w-4 h-4" />
-                        Confirm Slot
+                        {pricing && priceDisplay > 0
+                          ? `Pay \u20B9${priceDisplay} & Confirm`
+                          : 'Confirm Slot'}
                       </>
                     )}
                   </button>
