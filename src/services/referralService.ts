@@ -197,10 +197,12 @@ class ReferralService {
     const duration = pricing.slot_duration_minutes;
     const count = pricing.slots_per_session;
 
+    const cutoffMinutes = 16 * 60;
     const timeSlots: string[] = [];
     for (let i = 0; i < count; i++) {
       const totalMinStart = startHour * 60 + startMin + i * duration;
       const totalMinEnd = totalMinStart + duration;
+      if (totalMinEnd > cutoffMinutes) break;
       const sH = String(Math.floor(totalMinStart / 60)).padStart(2, '0');
       const sM = String(totalMinStart % 60).padStart(2, '0');
       const eH = String(Math.floor(totalMinEnd / 60)).padStart(2, '0');

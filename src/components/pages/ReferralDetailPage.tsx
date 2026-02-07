@@ -404,7 +404,7 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
               <div>
                 <h3 className="text-white font-bold">Book a Consultation Slot</h3>
                 <p className="text-slate-400 text-xs">
-                  {pricing.slot_duration_minutes}-min resume review session | {'\u20B9'}{pricing.slot_price / 100} per slot
+                  {pricing.slot_duration_minutes}-min resume review session | Slots available until 4:00 PM
                 </p>
               </div>
             </div>
@@ -587,7 +587,7 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
                             ) : (
                               <>
                                 <Calendar className="w-4 h-4" />
-                                Book for {'\u20B9'}{pricing.slot_price / 100}
+                                Confirm Slot
                               </>
                             )}
                           </button>
