@@ -24,14 +24,21 @@ interface SlotBookingPanelProps {
   icon: React.ReactNode;
   accentColor: string;
   onShowAuth: (callback?: () => void) => void;
+  listingQueryPrice?: number | null;
+  listingProfilePrice?: number | null;
+  listingSlotPrice?: number | null;
 }
 
-const getSlotPrice = (pricing: ReferralPricing, slotType: ReferralSlotType): number => {
+const getSlotPrice = (
+  pricing: ReferralPricing,
+  slotType: ReferralSlotType,
+  listingPrices?: { query?: number | null; profile?: number | null; slot?: number | null }
+): number => {
   switch (slotType) {
-    case 'query': return pricing.query_price;
-    case 'profile': return pricing.profile_price;
-    case 'consultation': return pricing.slot_price;
-    default: return pricing.slot_price;
+    case 'query': return listingPrices?.query ?? pricing.query_price;
+    case 'profile': return listingPrices?.profile ?? pricing.profile_price;
+    case 'consultation': return listingPrices?.slot ?? pricing.slot_price;
+    default: return listingPrices?.slot ?? pricing.slot_price;
   }
 };
 
@@ -43,7 +50,11 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
   icon,
   accentColor,
   onShowAuth,
+  listingQueryPrice,
+  listingProfilePrice,
+  listingSlotPrice,
 }) => {
+  const listingPrices = { query: listingQueryPrice, profile: listingProfilePrice, slot: listingSlotPrice };
   const { isAuthenticated, user } = useAuth();
   const [pricing, setPricing] = useState<ReferralPricing | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -129,7 +140,7 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
     setBookingStatus('processing');
     setErrorMessage('');
 
-    const amountPaise = getSlotPrice(pricing, slotType);
+    const amountPaise = getSlotPrice(pricing, slotType, listingPrices);
 
     if (amountPaise > 0) {
       const paymentResult = await openRazorpay(amountPaise);
@@ -172,7 +183,7 @@ export const SlotBookingPanel: React.FC<SlotBookingPanelProps> = ({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const priceDisplay = pricing ? getSlotPrice(pricing, slotType) / 100 : 0;
+  const priceDisplay = pricing ? getSlotPrice(pricing, slotType, listingPrices) / 100 : 0;
 
   if (bookingStatus === 'success') {
     return (

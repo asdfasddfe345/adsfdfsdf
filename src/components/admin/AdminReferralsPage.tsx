@@ -29,6 +29,9 @@ const emptyListing: Omit<ReferralListing, 'id' | 'created_at' | 'updated_at'> = 
   referrer_name: null,
   referrer_designation: null,
   is_active: true,
+  query_price: null,
+  profile_price: null,
+  slot_price: null,
 };
 
 export const AdminReferralsPage: React.FC = () => {
@@ -95,6 +98,9 @@ export const AdminReferralsPage: React.FC = () => {
       referrer_name: listing.referrer_name,
       referrer_designation: listing.referrer_designation,
       is_active: listing.is_active,
+      query_price: listing.query_price,
+      profile_price: listing.profile_price,
+      slot_price: listing.slot_price,
     });
     setShowForm(true);
   };
@@ -236,6 +242,25 @@ export const AdminReferralsPage: React.FC = () => {
                         {listing.tech_stack.map((t) => (
                           <span key={t} className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs rounded-md">{t}</span>
                         ))}
+                      </div>
+                    )}
+                    {(listing.query_price !== null || listing.profile_price !== null || listing.slot_price !== null) && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {listing.query_price !== null && (
+                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded-md">
+                            Query: {'\u20B9'}{listing.query_price / 100}
+                          </span>
+                        )}
+                        {listing.profile_price !== null && (
+                          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-xs rounded-md">
+                            Profile: {'\u20B9'}{listing.profile_price / 100}
+                          </span>
+                        )}
+                        {listing.slot_price !== null && (
+                          <span className="px-2 py-0.5 bg-teal-500/10 text-teal-400 text-xs rounded-md">
+                            Slot: {'\u20B9'}{listing.slot_price / 100}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -547,6 +572,51 @@ export const AdminReferralsPage: React.FC = () => {
                         className="w-full px-3 py-2.5 bg-slate-800/60 border border-slate-700/50 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500/50"
                         placeholder="SDE-2 at Amazon"
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 text-sm mb-2">Per-Listing Pricing (INR) - Leave empty to use global defaults</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-slate-500 text-xs mb-1">Query Price</label>
+                        <div className="relative">
+                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                          <input
+                            type="number"
+                            value={form.query_price !== null ? form.query_price / 100 : ''}
+                            onChange={(e) => setForm((p) => ({ ...p, query_price: e.target.value ? Number(e.target.value) * 100 : null }))}
+                            placeholder={pricing ? String(pricing.query_price / 100) : ''}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-slate-600"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 text-xs mb-1">Profile Price</label>
+                        <div className="relative">
+                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                          <input
+                            type="number"
+                            value={form.profile_price !== null ? form.profile_price / 100 : ''}
+                            onChange={(e) => setForm((p) => ({ ...p, profile_price: e.target.value ? Number(e.target.value) * 100 : null }))}
+                            placeholder={pricing ? String(pricing.profile_price / 100) : ''}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-slate-600"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-slate-500 text-xs mb-1">Slot Price</label>
+                        <div className="relative">
+                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                          <input
+                            type="number"
+                            value={form.slot_price !== null ? form.slot_price / 100 : ''}
+                            onChange={(e) => setForm((p) => ({ ...p, slot_price: e.target.value ? Number(e.target.value) * 100 : null }))}
+                            placeholder={pricing ? String(pricing.slot_price / 100) : ''}
+                            className="w-full pl-9 pr-3 py-2 bg-slate-800/60 border border-slate-700/50 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500/50 placeholder-slate-600"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 

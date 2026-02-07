@@ -218,6 +218,29 @@ export const ReferralsPage: React.FC<ReferralsPageProps> = ({ onShowAuth }) => {
                   </div>
                 )}
 
+                {(listing.query_price !== null || listing.profile_price !== null || listing.slot_price !== null) && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {listing.query_price !== null && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-xs">
+                        <IndianRupee className="w-3 h-3" />
+                        {listing.query_price / 100} Query
+                      </span>
+                    )}
+                    {listing.profile_price !== null && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-xs">
+                        <IndianRupee className="w-3 h-3" />
+                        {listing.profile_price / 100} Profile
+                      </span>
+                    )}
+                    {listing.slot_price !== null && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs">
+                        <IndianRupee className="w-3 h-3" />
+                        {listing.slot_price / 100} Slot
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {listing.referrer_name && (
                   <div className="mt-4 pt-3 border-t border-slate-700/40 flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold">

@@ -11,6 +11,9 @@ export interface ReferralListing {
   referrer_name: string | null;
   referrer_designation: string | null;
   is_active: boolean;
+  query_price: number | null;
+  profile_price: number | null;
+  slot_price: number | null;
   created_at: string;
   updated_at: string;
 }

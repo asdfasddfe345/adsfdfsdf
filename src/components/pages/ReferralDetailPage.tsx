@@ -38,7 +38,7 @@ interface ServiceCardInfo {
   borderColor: string;
   bgGradient: string;
   iconBg: string;
-  getPrice: (p: ReferralPricing) => number;
+  getPrice: (p: ReferralPricing, listing?: ReferralListing) => number;
 }
 
 const serviceCards: ServiceCardInfo[] = [
@@ -54,7 +54,7 @@ const serviceCards: ServiceCardInfo[] = [
     borderColor: 'border-blue-500/30 hover:border-blue-500/60',
     bgGradient: 'from-blue-500/5 to-blue-600/10',
     iconBg: 'bg-blue-500/10',
-    getPrice: (p) => p.query_price,
+    getPrice: (p, l) => l?.query_price ?? p.query_price,
   },
   {
     key: 'profile',
@@ -68,7 +68,7 @@ const serviceCards: ServiceCardInfo[] = [
     borderColor: 'border-amber-500/30 hover:border-amber-500/60',
     bgGradient: 'from-amber-500/5 to-amber-600/10',
     iconBg: 'bg-amber-500/10',
-    getPrice: (p) => p.profile_price,
+    getPrice: (p, l) => l?.profile_price ?? p.profile_price,
   },
   {
     key: 'consultation',
@@ -82,7 +82,7 @@ const serviceCards: ServiceCardInfo[] = [
     borderColor: 'border-emerald-500/30 hover:border-emerald-500/60',
     bgGradient: 'from-emerald-500/5 to-emerald-600/10',
     iconBg: 'bg-emerald-500/10',
-    getPrice: (p) => p.slot_price,
+    getPrice: (p, l) => l?.slot_price ?? p.slot_price,
   },
 ];
 
@@ -231,7 +231,7 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
             <h2 className="text-white font-bold text-xl mb-4">Choose a Service</h2>
             <div className="grid sm:grid-cols-3 gap-4 mb-6">
               {serviceCards.map((card) => {
-                const price = pricing ? card.getPrice(pricing) / 100 : 0;
+                const price = pricing ? card.getPrice(pricing, listing) / 100 : 0;
                 return (
                   <motion.button
                     key={card.key}
@@ -301,7 +301,7 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
                         className="absolute right-0 top-full mt-1 z-20 w-52 bg-[#0d1f2d] border border-slate-700/60 rounded-xl overflow-hidden shadow-xl"
                       >
                         {serviceCards.filter((c) => c.key !== activeTab).map((card) => {
-                          const price = pricing ? card.getPrice(pricing) / 100 : 0;
+                          const price = pricing ? card.getPrice(pricing, listing) / 100 : 0;
                           return (
                             <button
                               key={card.key}
@@ -348,6 +348,9 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
                   icon={activeConfig.icon}
                   accentColor={activeConfig.iconBg}
                   onShowAuth={() => onShowAuth(() => navigate(`/referrals/${id}`))}
+                  listingQueryPrice={listing.query_price}
+                  listingProfilePrice={listing.profile_price}
+                  listingSlotPrice={listing.slot_price}
                 />
               </div>
             </motion.div>
