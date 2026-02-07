@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
-import { Menu, X, Home, Info, BookOpen, Phone, FileText, LogIn, LogOut, User, Wallet, Briefcase, Crown, Sparkles, Gamepad2, Mail, Brain, Calendar, Video } from 'lucide-react';
+import { Menu, X, Home, Info, BookOpen, Phone, FileText, LogIn, LogOut, User, Wallet, Briefcase, Crown, Sparkles, Gamepad2, Mail, Brain, Calendar, Video, Users } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Navigation } from './components/navigation/Navigation';
@@ -71,6 +71,9 @@ const MyBookingsPage = lazy(() => import('./components/pages/MyBookingsPage').th
 const AdminSessionSchedule = lazy(() => import('./components/admin/AdminSessionSchedule').then(m => ({ default: m.AdminSessionSchedule })));
 const AdminSessionServiceEditor = lazy(() => import('./components/admin/AdminSessionServiceEditor').then(m => ({ default: m.AdminSessionServiceEditor })));
 const AdminWebinarsPage = lazy(() => import('./components/admin/AdminWebinarsPage').then(m => ({ default: m.AdminWebinarsPage })));
+const ReferralsPage = lazy(() => import('./components/pages/ReferralsPage').then(m => ({ default: m.ReferralsPage })));
+const ReferralDetailPage = lazy(() => import('./components/pages/ReferralDetailPage').then(m => ({ default: m.ReferralDetailPage })));
+const AdminReferralsPage = lazy(() => import('./components/admin/AdminReferralsPage').then(m => ({ default: m.AdminReferralsPage })));
 
 function App() {
   const { isAuthenticated, user, markProfilePromptSeen, isLoading } = useAuth();
@@ -541,6 +544,16 @@ const handleDiwaliCTAClick = useCallback(() => {
           <Route path="/session" element={<SessionLandingPage onShowAuth={handleShowAuth} />} />
           <Route path="/session/book" element={<SessionBookingFlow />} />
           <Route path="/my-bookings" element={<MyBookingsPage />} />
+          <Route path="/referrals" element={<ReferralsPage onShowAuth={handleShowAuth} />} />
+          <Route path="/referrals/:id" element={<ReferralDetailPage onShowAuth={handleShowAuth} />} />
+          <Route
+            path="/admin/referrals"
+            element={
+              <AdminRoute>
+                <AdminReferralsPage />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/admin/sessions"
             element={
@@ -692,11 +705,13 @@ const handleDiwaliCTAClick = useCallback(() => {
                       { id: '/spatial-reasoning', label: 'Spatial Reasoning', icon: <Brain className="w-5 h-5" /> },
                       { id: '/session', label: 'Resume Session', icon: <Sparkles className="w-5 h-5" /> },
                       ...(isAuthenticated ? [{ id: '/my-bookings', label: 'My Bookings', icon: <BookOpen className="w-5 h-5" /> }] : []),
+                      { id: '/referrals', label: 'Referrals', icon: <Users className="w-5 h-5" /> },
                       { id: '/careers', label: 'Careers', icon: <Briefcase className="w-5 h-5" /> },
                       { id: '/jobs', label: 'Latest Jobs', icon: <Briefcase className="w-5 h-5" /> },
                       ...((user?.role === 'admin' || user?.email === 'primoboostai@gmail.com') ? [{ id: '/admin/jobs', label: 'Admin Panel', icon: <Crown className="w-5 h-5" /> }] : []),
                       ...((user?.role === 'admin' || user?.email === 'primoboostai@gmail.com') ? [{ id: '/admin/webinars', label: 'Webinar Management', icon: <Video className="w-5 h-5" /> }] : []),
                       ...((user?.role === 'admin' || user?.email === 'primoboostai@gmail.com') ? [{ id: '/admin/blog', label: 'Blog Management', icon: <FileText className="w-5 h-5" /> }] : []),
+                      ...((user?.role === 'admin' || user?.email === 'primoboostai@gmail.com') ? [{ id: '/admin/referrals', label: 'Referral Mgmt', icon: <Users className="w-5 h-5" /> }] : []),
                       ...((user?.role === 'admin' || user?.email === 'primoboostai@gmail.com') ? [{ id: '/admin/email-testing', label: 'Email Testing', icon: <Mail className="w-5 h-5" /> }] : []),
                       ...((user?.role === 'admin' || user?.email === 'primoboostai@gmail.com') ? [{ id: '/admin/sessions', label: 'Session Schedule', icon: <Calendar className="w-5 h-5" /> }] : []),
                       { id: '/tutorials', label: 'Tutorials', icon: <BookOpen className="w-5 h-5" /> },

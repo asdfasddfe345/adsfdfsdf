@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   Calendar,
   CalendarCheck,
+  Users,
 } from 'lucide-react';
 
 // Interfaces
@@ -62,6 +63,7 @@ const pagesSection: SidebarSection = {
   id: 'pages',
   label: 'Explore',
   items: [
+    { id: 'referrals', label: 'Referrals', icon: <Users className="w-5 h-5" />, path: '/referrals' },
     { id: 'jobs', label: 'Latest Jobs', icon: <Briefcase className="w-5 h-5" />, path: '/jobs' },
     { id: 'pricing', label: 'Pricing', icon: <CreditCard className="w-5 h-5" />, path: '/pricing' },
     { id: 'blog', label: 'Blog', icon: <FileText className="w-5 h-5" />, path: '/blog' },

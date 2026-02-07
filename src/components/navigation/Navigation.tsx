@@ -78,6 +78,7 @@ export const Navigation: React.FC<NavigationProps> = ({ onPageChange }) => {
     { id: "/blog", label: "Blog", icon: <BookOpen className="w-4 h-4" /> },
     { id: "/webinars", label: "Webinars", icon: <Sparkles className="w-4 h-4" /> },
     { id: "/gaming", label: "Gaming", icon: <Gamepad2 className="w-4 h-4" /> },
+    { id: "/referrals", label: "Referrals", icon: <Users className="w-4 h-4" /> },
     { id: "/careers", label: "Careers", icon: <Users className="w-4 h-4" /> },
     { id: "/contact", label: "Contact", icon: <Phone className="w-4 h-4" /> },
     ...(isAuthenticated
@@ -111,6 +112,7 @@ export const Navigation: React.FC<NavigationProps> = ({ onPageChange }) => {
     { id: "/admin/email-testing", label: "Email Testing", icon: <Mail className="w-4 h-4" /> },
     { id: "/admin/users", label: "Manage Users", icon: <Users className="w-4 h-4" /> },
     { id: "/admin/sessions", label: "Session Schedule", icon: <Sparkles className="w-4 h-4" /> },
+    { id: "/admin/referrals", label: "Referral Mgmt", icon: <Shield className="w-4 h-4" /> },
   ];
 
   const isAdmin = isAuthenticated && (user?.role === "admin" || user?.email === "primoboostai@gmail.com");
