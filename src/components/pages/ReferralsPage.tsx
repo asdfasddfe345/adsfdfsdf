@@ -95,7 +95,6 @@ export const ReferralsPage: React.FC<ReferralsPageProps> = ({ onShowAuth }) => {
                 <Search className="w-5 h-5" />
               </div>
               <p className="text-white font-semibold text-sm mb-1">Referral Query</p>
-              <p className="text-2xl font-bold text-white">{'\u20B9'}{pricing.query_price / 100}</p>
               <p className="text-slate-500 text-xs mt-1">Get referrer contact details</p>
             </div>
             <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5 text-center">
@@ -103,7 +102,6 @@ export const ReferralsPage: React.FC<ReferralsPageProps> = ({ onShowAuth }) => {
                 <Star className="w-5 h-5" />
               </div>
               <p className="text-white font-semibold text-sm mb-1">Profile Monetization</p>
-              <p className="text-2xl font-bold text-white">{'\u20B9'}{pricing.profile_price / 100}</p>
               <p className="text-slate-500 text-xs mt-1">Get your profile shared with referrer</p>
             </div>
             <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-5 text-center">
@@ -111,7 +109,6 @@ export const ReferralsPage: React.FC<ReferralsPageProps> = ({ onShowAuth }) => {
                 <Shield className="w-5 h-5" />
               </div>
               <p className="text-white font-semibold text-sm mb-1">Consultation Slot</p>
-              <p className="text-2xl font-bold text-white">{'\u20B9'}{pricing.slot_price / 100}</p>
               <p className="text-slate-500 text-xs mt-1">{pricing.slot_duration_minutes}-min resume review session</p>
             </div>
           </motion.div>
