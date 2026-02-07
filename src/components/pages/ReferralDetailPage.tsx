@@ -225,14 +225,41 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
 
         <h2 className="text-white font-bold text-xl mb-4">Choose a Service</h2>
 
-        <div className="grid sm:grid-cols-3 gap-4 mb-6">
+        <div className={`grid gap-4 mb-6 ${activeTab ? 'sm:grid-cols-3' : 'sm:grid-cols-3'}`}>
           {serviceCards.map((card) => {
             const isActive = activeTab === card.key;
+            const isOther = activeTab !== null && !isActive;
             const price = pricing ? card.getPrice(pricing) / 100 : 0;
+
+            if (isOther) {
+              return (
+                <motion.button
+                  key={card.key}
+                  layout
+                  onClick={() => setActiveTab(card.key)}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative text-left p-4 rounded-2xl border border-slate-700/30 bg-[#0d1f2d]/40 opacity-50 hover:opacity-80 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-lg ${card.iconBg} flex items-center justify-center ${card.accentColor}`}>
+                      {card.cardIcon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-slate-300 font-semibold text-sm truncate">{card.title}</h3>
+                      {pricing && price > 0 && (
+                        <span className="text-slate-500 text-xs">{'\u20B9'}{price}</span>
+                      )}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
+                  </div>
+                </motion.button>
+              );
+            }
 
             return (
               <motion.button
                 key={card.key}
+                layout
                 onClick={() => setActiveTab(isActive ? null : card.key)}
                 whileTap={{ scale: 0.98 }}
                 className={`relative text-left p-5 rounded-2xl border transition-all duration-300 ${
