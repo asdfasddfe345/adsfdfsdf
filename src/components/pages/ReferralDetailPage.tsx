@@ -12,9 +12,11 @@ import {
   Star,
   Shield,
   ChevronRight,
+  ChevronDown,
   MessageCircle,
   UserCheck,
   CalendarCheck,
+  X,
 } from 'lucide-react';
 import { referralService } from '../../services/referralService';
 import { SlotBookingPanel } from '../referral/SlotBookingPanel';
@@ -92,6 +94,7 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
   const [pricing, setPricing] = useState<ReferralPricing | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ReferralSlotType | null>(null);
+  const [showSwitcher, setShowSwitcher] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -223,96 +226,120 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
           </div>
         </motion.div>
 
-        <h2 className="text-white font-bold text-xl mb-4">Choose a Service</h2>
-
-        <div className={`grid gap-4 mb-6 ${activeTab ? 'sm:grid-cols-3' : 'sm:grid-cols-3'}`}>
-          {serviceCards.map((card) => {
-            const isActive = activeTab === card.key;
-            const isOther = activeTab !== null && !isActive;
-            const price = pricing ? card.getPrice(pricing) / 100 : 0;
-
-            if (isOther) {
-              return (
-                <motion.button
-                  key={card.key}
-                  layout
-                  onClick={() => setActiveTab(card.key)}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative text-left p-4 rounded-2xl border border-slate-700/30 bg-[#0d1f2d]/40 opacity-50 hover:opacity-80 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg ${card.iconBg} flex items-center justify-center ${card.accentColor}`}>
-                      {card.cardIcon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-slate-300 font-semibold text-sm truncate">{card.title}</h3>
+        {!activeTab && (
+          <>
+            <h2 className="text-white font-bold text-xl mb-4">Choose a Service</h2>
+            <div className="grid sm:grid-cols-3 gap-4 mb-6">
+              {serviceCards.map((card) => {
+                const price = pricing ? card.getPrice(pricing) / 100 : 0;
+                return (
+                  <motion.button
+                    key={card.key}
+                    onClick={() => setActiveTab(card.key)}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="relative text-left p-5 rounded-2xl border bg-[#0d1f2d]/80 border-slate-700/40 hover:border-slate-600/60 transition-all duration-300"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center ${card.accentColor}`}>
+                        {card.cardIcon}
+                      </div>
                       {pricing && price > 0 && (
-                        <span className="text-slate-500 text-xs">{'\u20B9'}{price}</span>
+                        <span className={`text-lg font-bold ${card.accentColor}`}>
+                          {'\u20B9'}{price}
+                        </span>
                       )}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
-                  </div>
-                </motion.button>
-              );
-            }
-
-            return (
-              <motion.button
-                key={card.key}
-                layout
-                onClick={() => setActiveTab(isActive ? null : card.key)}
-                whileTap={{ scale: 0.98 }}
-                className={`relative text-left p-5 rounded-2xl border transition-all duration-300 ${
-                  isActive
-                    ? `bg-gradient-to-br ${card.bgGradient} ${card.borderColor.split(' ')[0]} ring-1 ring-opacity-30 ${card.borderColor.split(' ')[0].replace('border', 'ring')}`
-                    : `bg-[#0d1f2d]/80 border-slate-700/40 hover:border-slate-600/60`
-                }`}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center ${card.accentColor}`}>
-                    {card.cardIcon}
-                  </div>
-                  {pricing && price > 0 && (
-                    <div className="flex items-center gap-0.5">
-                      <span className={`text-lg font-bold ${card.accentColor}`}>
-                        {'\u20B9'}{price}
-                      </span>
+                    <h3 className="text-white font-bold text-base mb-1">{card.title}</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-3">{card.description}</p>
+                    <ul className="space-y-1.5 mb-4">
+                      {card.features.map((f) => (
+                        <li key={f} className="flex items-center gap-2 text-xs text-slate-300">
+                          <div className={`w-1.5 h-1.5 rounded-full ${card.iconBg} flex-shrink-0`} />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-slate-400">
+                      Book Now
+                      <ChevronRight className="w-4 h-4" />
                     </div>
-                  )}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {activeTab && activeConfig && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-lg ${activeConfig.iconBg} flex items-center justify-center ${activeConfig.accentColor}`}>
+                  {activeConfig.cardIcon}
                 </div>
-
-                <h3 className="text-white font-bold text-base mb-1">{card.title}</h3>
-                <p className="text-slate-400 text-xs leading-relaxed mb-3">{card.description}</p>
-
-                <ul className="space-y-1.5 mb-4">
-                  {card.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-xs text-slate-300">
-                      <div className={`w-1.5 h-1.5 rounded-full ${card.iconBg} flex-shrink-0`} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className={`flex items-center gap-1.5 text-sm font-medium ${isActive ? card.accentColor : 'text-slate-400'}`}>
-                  {isActive ? 'Booking Open' : 'Book Now'}
-                  <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? 'rotate-90' : ''}`} />
+                <div>
+                  <h2 className="text-white font-bold text-base">{activeConfig.title}</h2>
+                  <p className="text-slate-400 text-xs">{activeConfig.subtitle}</p>
                 </div>
-              </motion.button>
-            );
-          })}
-        </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSwitcher(!showSwitcher)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/40 text-slate-300 text-xs font-medium hover:border-slate-600 transition-colors"
+                  >
+                    Switch
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSwitcher ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {showSwitcher && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="absolute right-0 top-full mt-1 z-20 w-52 bg-[#0d1f2d] border border-slate-700/60 rounded-xl overflow-hidden shadow-xl"
+                      >
+                        {serviceCards.filter((c) => c.key !== activeTab).map((card) => {
+                          const price = pricing ? card.getPrice(pricing) / 100 : 0;
+                          return (
+                            <button
+                              key={card.key}
+                              onClick={() => { setActiveTab(card.key); setShowSwitcher(false); }}
+                              className="flex items-center gap-3 w-full px-4 py-3 hover:bg-slate-800/60 transition-colors text-left"
+                            >
+                              <div className={`w-8 h-8 rounded-lg ${card.iconBg} flex items-center justify-center ${card.accentColor} flex-shrink-0`}>
+                                {card.cardIcon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white text-sm font-medium truncate">{card.title}</p>
+                                {pricing && price > 0 && (
+                                  <p className="text-slate-500 text-xs">{'\u20B9'}{price}</p>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <button
+                  onClick={() => { setActiveTab(null); setShowSwitcher(false); }}
+                  className="p-1.5 rounded-lg bg-slate-800/60 border border-slate-700/40 text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
-        <AnimatePresence mode="wait">
-          {activeTab && activeConfig && (
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
             >
-              <div className="bg-gradient-to-br from-[#0d1f2d] to-[#0a1a24] border border-slate-700/50 rounded-2xl p-6">
+              <div className="bg-gradient-to-br from-[#0d1f2d] to-[#0a1a24] border border-slate-700/50 rounded-2xl p-4 sm:p-6">
                 <SlotBookingPanel
                   listingId={listing.id}
                   slotType={activeTab}
@@ -324,8 +351,8 @@ export const ReferralDetailPage: React.FC<ReferralDetailPageProps> = ({ onShowAu
                 />
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );
