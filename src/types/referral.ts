@@ -39,11 +39,14 @@ export interface ReferralPurchase {
   referral_listings?: ReferralListing;
 }
 
+export type ReferralSlotType = 'query' | 'profile' | 'consultation';
+
 export interface ReferralConsultationSlot {
   id: string;
   referral_listing_id: string;
   slot_date: string;
   time_slot: string;
+  slot_type: ReferralSlotType;
   status: 'available' | 'booked' | 'blocked';
   booked_by: string | null;
   booking_payment_id: string | null;

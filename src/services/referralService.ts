@@ -5,6 +5,7 @@ import type {
   ReferralPurchase,
   ReferralConsultationSlot,
   ReferralSlotDisplayInfo,
+  ReferralSlotType,
 } from '../types/referral';
 
 class ReferralService {
@@ -188,18 +189,31 @@ class ReferralService {
     return !!data;
   }
 
-  async getSlotsForDate(listingId: string, date: string): Promise<ReferralSlotDisplayInfo[]> {
-    const pricing = await this.getPricing();
-    if (!pricing) return [];
+  private getSlotDuration(slotType: ReferralSlotType): number {
+    switch (slotType) {
+      case 'profile': return 60;
+      case 'query': return 15;
+      case 'consultation': return 15;
+      default: return 15;
+    }
+  }
 
-    const startHour = parseInt(pricing.slot_start_time.split(':')[0], 10);
-    const startMin = parseInt(pricing.slot_start_time.split(':')[1], 10);
-    const duration = pricing.slot_duration_minutes;
-    const count = pricing.slots_per_session;
+  private formatTime(t: string): string {
+    const [h, m] = t.split(':').map(Number);
+    const suffix = h >= 12 ? 'PM' : 'AM';
+    const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${displayH}:${String(m).padStart(2, '0')} ${suffix}`;
+  }
 
+  async getSlotsForDate(listingId: string, date: string, slotType: ReferralSlotType = 'consultation'): Promise<ReferralSlotDisplayInfo[]> {
+    const startHour = 10;
+    const startMin = 0;
+    const duration = this.getSlotDuration(slotType);
     const cutoffMinutes = 16 * 60;
+
     const timeSlots: string[] = [];
-    for (let i = 0; i < count; i++) {
+    let i = 0;
+    while (true) {
       const totalMinStart = startHour * 60 + startMin + i * duration;
       const totalMinEnd = totalMinStart + duration;
       if (totalMinEnd > cutoffMinutes) break;
@@ -208,13 +222,15 @@ class ReferralService {
       const eH = String(Math.floor(totalMinEnd / 60)).padStart(2, '0');
       const eM = String(totalMinEnd % 60).padStart(2, '0');
       timeSlots.push(`${sH}:${sM}-${eH}:${eM}`);
+      i++;
     }
 
     const { data: existingSlots, error } = await supabase
       .from('referral_consultation_slots')
       .select('*')
       .eq('referral_listing_id', listingId)
-      .eq('slot_date', date);
+      .eq('slot_date', date)
+      .eq('slot_type', slotType);
 
     if (error) {
       console.error('ReferralService: Error fetching slots:', error.message);
@@ -229,27 +245,21 @@ class ReferralService {
     return timeSlots.map((ts) => {
       const existing = slotMap[ts];
       const [start, end] = ts.split('-');
-      const formatTime = (t: string) => {
-        const [h, m] = t.split(':').map(Number);
-        const suffix = h >= 12 ? 'PM' : 'AM';
-        const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
-        return `${displayH}:${String(m).padStart(2, '0')} ${suffix}`;
-      };
       return {
         time_slot: ts,
-        label: `${formatTime(start)} - ${formatTime(end)}`,
+        label: `${this.formatTime(start)} - ${this.formatTime(end)}`,
         status: existing?.status || 'available',
         slot_id: existing?.id,
       } as ReferralSlotDisplayInfo;
     });
   }
 
-  async bookConsultationSlot(
+  async bookSlot(
     userId: string,
     listingId: string,
     date: string,
     timeSlot: string,
-    paymentId: string | null,
+    slotType: ReferralSlotType,
     userName: string,
     userEmail: string,
     userPhone?: string
@@ -260,6 +270,7 @@ class ReferralService {
       .eq('referral_listing_id', listingId)
       .eq('slot_date', date)
       .eq('time_slot', timeSlot)
+      .eq('slot_type', slotType)
       .eq('status', 'booked')
       .maybeSingle();
 
@@ -273,9 +284,10 @@ class ReferralService {
         referral_listing_id: listingId,
         slot_date: date,
         time_slot: timeSlot,
+        slot_type: slotType,
         status: 'booked',
         booked_by: userId,
-        booking_payment_id: paymentId,
+        booking_payment_id: null,
         user_name: userName,
         user_email: userEmail,
         user_phone: userPhone || null,
