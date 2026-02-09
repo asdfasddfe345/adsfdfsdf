@@ -1,0 +1,1 @@
+import{e as r}from"./edenAITextService-y6w1oEiu.js";console.log("GeminiServiceWrapper: Using EdenAI for text generation");class t{async generateText(e){return r.generateTextWithRetry(e,{temperature:.3,maxTokens:4e3})}async chat(e){return r.chat(e,{temperature:.3,maxTokens:4e3})}}const i=new t;export{i as g};
