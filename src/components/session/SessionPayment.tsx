@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SUPABASE_URL } from '../../config/env';
 import { motion } from 'framer-motion';
 import {
   Calendar,
@@ -65,7 +66,7 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
       }
 
       const orderResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-order`,
+        `${SUPABASE_URL || 'https://rixmudvtbfkjpwjoefon.supabase.co'}/functions/v1/create-order`,
         {
           method: 'POST',
           headers: {

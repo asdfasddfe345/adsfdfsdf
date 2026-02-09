@@ -1,5 +1,9 @@
 // src/services/paymentService.ts
 import { supabase } from '../lib/supabaseClient';
+import { SUPABASE_URL } from '../config/env';
+
+const FALLBACK_SUPABASE_URL = 'https://rixmudvtbfkjpwjoefon.supabase.co';
+const getBaseUrl = () => SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
 
 // ---------- Types ----------
 export interface SubscriptionPlan {
@@ -684,7 +688,7 @@ class PaymentService {
   // ---------- Coupon helpers ----------
   private async validateCouponServer(couponCode: string, userId: string, accessToken: string) {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-coupon`, {
+      const response = await fetch(`${getBaseUrl()}/functions/v1/validate-coupon`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ couponCode, userId }),
@@ -796,7 +800,7 @@ class PaymentService {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('PaymentService: Calling create-order Edge Function...');
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-order`, {
+      const response = await fetch(`${getBaseUrl()}/functions/v1/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({
@@ -828,7 +832,7 @@ class PaymentService {
           handler: async (rzpRes: any) => {
             try {
               console.log('PaymentService: Calling verify-payment Edge Function...');
-              const verifyResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`, {
+              const verifyResponse = await fetch(`${getBaseUrl()}/functions/v1/verify-payment`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
                 body: JSON.stringify({
