@@ -181,6 +181,15 @@ export const ResumeScoreChecker: React.FC<ResumeScoreCheckerProps> = ({
     setLoadingStep('Extracting & cleaning your resume...');
 
     try {
+      const usageResult = await paymentService.useScoreCheck(user.id);
+      if (!usageResult.success) {
+        console.error('Failed to deduct score check credit:', usageResult.error);
+        onShowAlert('Credits Exhausted', 'No score check credits available. Please upgrade.', 'error', 'Upgrade Plan', () => onShowSubscriptionPlans('score-checker'));
+        setIsAnalyzing(false);
+        setLoadingStep('');
+        return;
+      }
+      await refreshUserSubscription();
       if (scoringMode === 'jd_based') {
         setLoadingStep(`Comparing with Job Title: ${jobTitle}...`);
       }
@@ -219,15 +228,6 @@ export const ResumeScoreChecker: React.FC<ResumeScoreCheckerProps> = ({
       
       setScoreResult(result);
       setCurrentStep(2);
-
-      // Decrement usage after successful analysis
-      const usageResult = await paymentService.useScoreCheck(latestUserSubscription.userId);
-      if (usageResult.success) {
-        await refreshUserSubscription(); // Refresh App.tsx state after usage
-      } else {
-        console.error('Failed to decrement score check usage:', usageResult.error);
-        onShowAlert('Usage Update Failed', 'Failed to record score check usage. Please contact support.', 'error');
-      }
     } catch (error: any) {
       console.error('_analyzeResumeInternal: Error in try block:', error);
       onShowAlert('Analysis Failed', `Failed to analyze resume: ${error.message || 'Unknown error'}. Please try again.`, 'error');

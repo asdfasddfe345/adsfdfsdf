@@ -185,7 +185,7 @@ export const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> =
   }, [currentStep, formData]); // Dependencies for memoized function
 
   const handleGenerateMessage = useCallback(async () => {
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user?.id) {
     onShowAlert(
       'Authentication Required',
       'Please sign in to generate LinkedIn messages.',
@@ -201,14 +201,34 @@ export const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> =
     onShowAlert('Missing Recipient Information', 'Please fill in all required recipient details.', 'warning');
     return;
   }
-  
+
   if (formData.messageType === 'referral' && !formData.referralContext) {
     onShowAlert('Missing Referral Context', 'Please provide context for the referral.', 'warning');
     return;
   }
 
+  const latestSub = await paymentService.getUserSubscription(user.id);
+  if (!latestSub || (latestSub.linkedinMessagesTotal - latestSub.linkedinMessagesUsed) <= 0) {
+    onShowAlert(
+      'No Credits Available',
+      'You need LinkedIn Message credits to generate messages.',
+      'error',
+      'Get Credits',
+      () => onShowSubscriptionPlans('linkedin-generator')
+    );
+    setMessageGenerationInterrupted(true);
+    return;
+  }
+
   setIsGenerating(true);
   try {
+    const creditResult = await paymentService.useLinkedInMessage(user.id);
+    if (!creditResult.success) {
+      onShowAlert('Credit Deduction Failed', 'Could not deduct credit. Please try again.', 'error');
+      return;
+    }
+    await refreshUserSubscription();
+
     const messages = await generateLinkedInMessage(formData);
     setGeneratedMessages(messages);
   } catch (error: any) {
@@ -221,7 +241,7 @@ export const LinkedInMessageGenerator: React.FC<LinkedInMessageGeneratorProps> =
   } finally {
     setIsGenerating(false);
   }
-}, [isAuthenticated, onShowAuth, onShowAlert, formData]);
+}, [isAuthenticated, onShowAuth, onShowAlert, onShowSubscriptionPlans, formData, user, refreshUserSubscription]);
  // Dependencies for memoized function
 
   // Register the handleGenerateMessage function with the App.tsx trigger

@@ -180,7 +180,7 @@ const addOns = [
   {
     id: 'jd_optimization_single_purchase',
     name: 'JD-Based Optimization (1 Use)',
-    price: 49,
+    price: 19,
     type: 'optimization',
     quantity: 1,
   },
@@ -514,6 +514,27 @@ serve(async (req) => {
     }
 
     if (!isWebinarPayment && !isSessionBooking && walletDeduction && walletDeduction > 0) {
+      const { data: walletRows, error: walletBalanceError } = await supabase
+        .from("wallet_transactions")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("status", "completed");
+
+      if (walletBalanceError) {
+        console.error(`[${new Date().toISOString()}] - Error checking wallet balance:`, walletBalanceError);
+        throw new Error('Failed to verify wallet balance.');
+      }
+
+      const currentBalance = (walletRows || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+      const walletDeductionInRupees = walletDeduction / 100;
+      if (currentBalance < walletDeductionInRupees) {
+        console.error(`[${new Date().toISOString()}] - Insufficient wallet balance. Current: ${currentBalance}, Requested: ${walletDeductionInRupees}`);
+        return new Response(
+          JSON.stringify({ error: 'Insufficient wallet balance.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
+        );
+      }
+
       finalAmount = Math.max(0, finalAmount - walletDeduction);
     }
 

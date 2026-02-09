@@ -298,6 +298,57 @@ serve(async (req) => {
 
     console.log(`[${new Date().toISOString()}] - Retrieved from orderData.notes: planId=${planId}, couponCode=${couponCode}, walletDeduction=${walletDeduction}, selectedAddOns=${JSON.stringify(selectedAddOns)}, paymentType=${paymentType}, webinarId=${webinarId}, registrationId=${registrationId}`);
 
+    // IDEMPOTENCY CHECK: Prevent replay attacks / double-verification
+    const { data: existingTx, error: existingTxError } = await supabase
+      .from("payment_transactions")
+      .select("id, status, payment_id")
+      .eq("id", transactionId)
+      .single();
+
+    if (existingTxError || !existingTx) {
+      console.error(`[${new Date().toISOString()}] - Transaction ${transactionId} not found.`);
+      throw new Error("Transaction not found.");
+    }
+
+    if (existingTx.status === "success") {
+      console.log(`[${new Date().toISOString()}] - Transaction ${transactionId} already verified. Returning existing result.`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          verified: true,
+          transactionId,
+          message: "Payment already verified.",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
+
+    if (existingTx.status !== "pending") {
+      console.error(`[${new Date().toISOString()}] - Transaction ${transactionId} has status "${existingTx.status}", expected "pending".`);
+      throw new Error("Transaction is not in a verifiable state.");
+    }
+
+    // WALLET BALANCE VALIDATION: Ensure user has sufficient wallet balance
+    if (walletDeduction > 0) {
+      const { data: walletRows, error: walletBalanceError } = await supabase
+        .from("wallet_transactions")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("status", "completed");
+
+      if (walletBalanceError) {
+        console.error(`[${new Date().toISOString()}] - Error checking wallet balance:`, walletBalanceError);
+        throw new Error("Failed to verify wallet balance.");
+      }
+
+      const currentBalance = (walletRows || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+      if (currentBalance < walletDeduction) {
+        console.error(`[${new Date().toISOString()}] - Insufficient wallet balance. Current: ${currentBalance}, Requested: ${walletDeduction}`);
+        throw new Error("Insufficient wallet balance for deduction.");
+      }
+      console.log(`[${new Date().toISOString()}] - Wallet balance validated. Current: ${currentBalance}, Deduction: ${walletDeduction}`);
+    }
+
     // Update payment transaction status in Supabase
     console.log(`[${new Date().toISOString()}] - Attempting to update payment_transactions record with ID: ${transactionId}`);
     const { data: updatedTransaction, error: updateTransactionError } = await supabase
@@ -306,17 +357,18 @@ serve(async (req) => {
         payment_id: razorpay_payment_id,
         status: "success",
         order_id: razorpay_order_id,
-        wallet_deduction_amount: walletDeduction, // Stored as a number (rupees)
+        wallet_deduction_amount: walletDeduction,
         coupon_code: couponCode,
         discount_amount: discountAmount,
       })
       .eq("id", transactionId)
+      .eq("status", "pending")
       .select()
       .single();
 
     if (updateTransactionError) {
       console.error(`[${new Date().toISOString()}] - Error updating payment transaction to success:`, updateTransactionError);
-      throw new Error("Failed to update payment transaction status.");
+      throw new Error("Failed to update payment transaction status. It may have been processed already.");
     }
     console.log(`[${new Date().toISOString()}] - Payment transaction updated to success. Record ID: ${updatedTransaction.id}, coupon_code: ${updatedTransaction.coupon_code}`);
     transactionStatus = "success";

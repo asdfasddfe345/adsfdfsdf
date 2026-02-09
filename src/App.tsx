@@ -185,7 +185,7 @@ function App() {
   const handleSubscriptionSuccess = useCallback(async () => {
     setShowSubscriptionPlans(false);
     setShowPlanSelectionModal(false);
-    setSuccessMessage('🎄 Subscription activated successfully! Merry Christmas! 🎅');
+    setSuccessMessage('Subscription activated successfully!');
     setShowSuccessNotification(true);
     setTimeout(() => {
       setShowSuccessNotification(false);
@@ -195,12 +195,10 @@ function App() {
     await fetchSubscription();
     setWalletRefreshKey((prev) => prev + 1);
 
-    queueMicrotask(() => {
-      if (toolProcessTrigger) {
-        console.log('App.tsx: Running toolProcessTrigger after subscription success');
-        toolProcessTrigger();
-      }
-    });
+    if (toolProcessTrigger) {
+      console.log('App.tsx: Running toolProcessTrigger after subscription success');
+      toolProcessTrigger();
+    }
   }, [fetchSubscription, toolProcessTrigger]);
 
   const handleAddonPurchaseSuccess = useCallback(
@@ -229,12 +227,10 @@ function App() {
       setShowPlanSelectionModal(false);
       setShowSubscriptionPlans(false);
 
-      queueMicrotask(() => {
-        if (toolProcessTrigger) {
-          console.log('App.tsx: Executing toolProcessTrigger for feature:', featureId);
-          toolProcessTrigger();
-        }
-      });
+      if (toolProcessTrigger) {
+        console.log('App.tsx: Executing toolProcessTrigger for feature:', featureId);
+        toolProcessTrigger();
+      }
     },
     [refreshUserSubscription, handleShowAlert, toolProcessTrigger]
   );

@@ -462,7 +462,16 @@ const checkForMissingSections = useCallback((resumeData: ResumeData): string[] =
     
     try {
       setIsOptimizing(true);
-      
+
+      const optimizationCreditResult = await paymentService.useOptimization(user!.id);
+      if (!optimizationCreditResult.success) {
+        console.error('Failed to deduct optimization credit:', optimizationCreditResult.error);
+        alert('No optimization credits available. Please purchase a plan.');
+        return;
+      }
+      await checkSubscriptionStatus();
+      setWalletRefreshKey(prevKey => prevKey + 1);
+
       // EDENAI + JD OPTIMIZATION: Optimize resume against job description with 220+ metrics
       let finalOptimizedResume: ResumeData;
       
@@ -568,23 +577,14 @@ const checkForMissingSections = useCallback((resumeData: ResumeData): string[] =
       // setAfterScore(afterScoreData);
       
       setChangedSections(['workExperience', 'education', 'projects', 'skills', 'certifications']);
-      const optimizationResult = await paymentService.useOptimization(user!.id);
-      if (optimizationResult.success) {
-        await checkSubscriptionStatus();
-        setWalletRefreshKey(prevKey => prevKey + 1);
-        // ADDED: Increment resumes_created_count after successful optimization
-        if (user) {
-          try {
-            await authService.incrementResumesCreatedCount(user.id);
-            // ADDED: Increment global resumes created count
-            await authService.incrementGlobalResumesCreatedCount();
-            await revalidateUserSession(); // Revalidate session to update user context with new count
-          } catch (countError) {
-            console.error('ResumeOptimizer: Failed to increment resume counts:', countError);
-          }
+      if (user) {
+        try {
+          await authService.incrementResumesCreatedCount(user.id);
+          await authService.incrementGlobalResumesCreatedCount();
+          await revalidateUserSession();
+        } catch (countError) {
+          console.error('ResumeOptimizer: Failed to increment resume counts:', countError);
         }
-      } else {
-        console.error('Failed to decrement optimization usage:', optimizationResult.error);
       }
       setActiveTab('resume');
       

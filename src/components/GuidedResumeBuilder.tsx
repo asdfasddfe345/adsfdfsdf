@@ -499,6 +499,16 @@ const asText = (v: any): string => {
   const proceedWithFinalOptimization = useCallback(async (resumeData: ResumeData, initialScore: DetailedScore, accessToken: string) => { // Memoize
     try {
       setIsOptimizing(true);
+
+      const optimizationCreditResult = await paymentService.useOptimization(user!.id);
+      if (!optimizationCreditResult.success) {
+        console.error('Failed to deduct optimization credit:', optimizationCreditResult.error);
+        alert('No optimization credits available. Please purchase a plan.');
+        return;
+      }
+      await checkSubscriptionStatus();
+      setWalletRefreshKey(prevKey => prevKey + 1);
+
       const finalOptimizedResume = await optimizeResume(
         reconstructResumeText(resumeData),
         jobDescription,
@@ -519,13 +529,6 @@ const asText = (v: any): string => {
       const afterScoreData = await generateAfterScore(finalOptimizedResume, jobDescription);
       setAfterScore(afterScoreData);
       setChangedSections(['workExperience', 'education', 'projects', 'skills', 'certifications']);
-      const optimizationResult = await paymentService.useOptimization(user!.id);
-      if (optimizationResult.success) {
-        await checkSubscriptionStatus();
-        setWalletRefreshKey(prevKey => prevKey + 1);
-      } else {
-        console.error('Failed to decrement optimization usage:', optimizationResult.error);
-      }
       setActiveTab('resume');
       setOptimizedResume(finalOptimizedResume);
     } catch (error) {
