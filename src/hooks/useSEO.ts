@@ -10,6 +10,8 @@ interface SEOOptions {
   ogTitle?: string;
   ogDescription?: string;
   ogType?: string;
+  ogImage?: string;
+  twitterCard?: 'summary' | 'summary_large_image';
   noIndex?: boolean;
 }
 
@@ -22,6 +24,8 @@ export function useSEO(options: SEOOptions) {
       ogTitle,
       ogDescription,
       ogType,
+      ogImage,
+      twitterCard,
       noIndex,
     } = options;
 
@@ -53,6 +57,20 @@ export function useSEO(options: SEOOptions) {
       updateMetaProperty('og:url', `${BASE_URL}${canonical}`);
     }
 
+    if (ogImage) {
+      updateMetaProperty('og:image', ogImage);
+      updateMetaProperty('og:image:alt', ogTitle || title || BASE_TITLE);
+    }
+
+    if (twitterCard) {
+      updateMeta('twitter:card', twitterCard);
+      updateMeta('twitter:title', ogTitle || `${title} | ${BASE_TITLE}`);
+      updateMeta('twitter:description', ogDescription || description || '');
+      if (ogImage) {
+        updateMeta('twitter:image', ogImage);
+      }
+    }
+
     if (noIndex) {
       updateMeta('robots', 'noindex, nofollow');
     }
@@ -61,7 +79,7 @@ export function useSEO(options: SEOOptions) {
       document.title = `${BASE_TITLE} - AI-Powered Resume Optimizer | ATS-Friendly Resume Builder`;
       updateMeta('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
     };
-  }, [options.title, options.description, options.canonical, options.ogTitle, options.ogDescription, options.ogType, options.noIndex]);
+  }, [options.title, options.description, options.canonical, options.ogTitle, options.ogDescription, options.ogType, options.ogImage, options.twitterCard, options.noIndex]);
 }
 
 function updateMeta(name: string, content: string) {

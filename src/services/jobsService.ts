@@ -570,6 +570,47 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
     }
   }
 
+  async getJobsByCompany(companySlug: string): Promise<{
+    jobs: JobListing[];
+    companyName: string;
+    companyLogo: string | null;
+    companyWebsite: string | null;
+    companyDescription: string | null;
+    total: number;
+  }> {
+    try {
+      const searchTerm = companySlug.replace(/-/g, ' ');
+
+      const { data: jobs, error, count } = await supabase
+        .from('job_listings')
+        .select('*', { count: 'exact' })
+        .ilike('company_name', `%${searchTerm}%`)
+        .eq('is_active', true)
+        .order('posted_date', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch company jobs: ${error.message}`);
+      }
+
+      const companyName = jobs?.[0]?.company_name || searchTerm;
+      const companyLogo = jobs?.[0]?.company_logo_url || jobs?.[0]?.company_logo || null;
+      const companyWebsite = jobs?.[0]?.company_website || null;
+      const companyDescription = jobs?.[0]?.company_description || null;
+
+      return {
+        jobs: jobs || [],
+        companyName,
+        companyLogo,
+        companyWebsite,
+        companyDescription,
+        total: count || 0,
+      };
+    } catch (error) {
+      console.error('Error fetching company jobs:', error);
+      throw error;
+    }
+  }
+
   async getFilterOptions(): Promise<{
     domains: string[];
     locationTypes: string[];

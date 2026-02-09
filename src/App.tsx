@@ -30,6 +30,7 @@ const FloatingChatbot = lazy(() => import('./components/common/FloatingChatbot')
 const CareersPage = lazy(() => import('./components/pages/CareersPage').then(m => ({ default: m.CareersPage })));
 const JobDetailsPage = lazy(() => import('./components/pages/JobDetailsPageNew').then(m => ({ default: m.JobDetailsPageNew })));
 const JobsPage = lazy(() => import('./components/pages/JobsPage').then(m => ({ default: m.JobsPage })));
+const CompanyJobsPage = lazy(() => import('./components/pages/CompanyJobsPage').then(m => ({ default: m.CompanyJobsPage })));
 const MyApplicationsPage = lazy(() => import('./components/pages/MyApplicationsPage').then(m => ({ default: m.MyApplicationsPage })));
 const JobApplicationPage = lazy(() => import('./components/pages/JobApplicationPage').then(m => ({ default: m.JobApplicationPage })));
 const JobApplicationFormPage = lazy(() => import('./components/pages/JobApplicationFormPage').then(m => ({ default: m.JobApplicationFormPage })));
@@ -524,6 +525,7 @@ const handleDiwaliCTAClick = useCallback(() => {
           <Route path="/careers" element={<CareersPage {...commonPageProps} />} />
           <Route path="/careers/:jobId" element={<JobDetailsPage {...commonPageProps} />} />
           <Route path="/jobs" element={<JobsPage {...commonPageProps} onShowProfile={handleShowProfile} />} />
+          <Route path="/jobs/company/:companySlug" element={<CompanyJobsPage {...commonPageProps} onShowProfile={handleShowProfile} />} />
           <Route path="/jobs/:jobId" element={<JobDetailsPage {...commonPageProps} />} />
           <Route path="/jobs/:jobId/apply" element={<JobApplicationPage />} />
           <Route path="/jobs/:jobId/apply-form" element={<JobApplicationFormPage />} />

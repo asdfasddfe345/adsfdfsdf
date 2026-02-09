@@ -37,16 +37,6 @@ export const JobCard: React.FC<JobCardProps> = ({
   const navigate = useNavigate();
   const autoApplyEnabled = import.meta.env.VITE_ENABLE_AUTO_APPLY === 'true';
 
-  // Debug logging for logo
-  React.useEffect(() => {
-    console.log('JobCard Debug:', {
-      company: job.company_name,
-      logo_url: job.company_logo_url,
-      logo_old: job.company_logo,
-      has_logo: !!(job.company_logo_url || job.company_logo)
-    });
-  }, [job]);
-
   const eligibleYearTags = useMemo(() => {
     const raw = job.eligible_years;
     if (!raw) return [];
@@ -122,7 +112,7 @@ export const JobCard: React.FC<JobCardProps> = ({
             {(job.company_logo_url || job.company_logo) ? (
               <img
                 src={job.company_logo_url || job.company_logo}
-                alt={`${job.company_name} logo`}
+                alt={`${job.company_name} jobs - ${job.role_title} opening`}
                 className="w-full h-full object-contain object-center"
                 loading="lazy"
                 onError={(e) => {
@@ -149,7 +139,23 @@ export const JobCard: React.FC<JobCardProps> = ({
                   {job.role_title}
                 </h3>
                 <p className="text-sm text-slate-400 mb-2">
-                  {job.company_name}
+                  <span
+                    role="link"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/jobs/company/${job.company_name.toLowerCase().replace(/\s+/g, '-')}`);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.stopPropagation();
+                        navigate(`/jobs/company/${job.company_name.toLowerCase().replace(/\s+/g, '-')}`);
+                      }
+                    }}
+                    className="hover:text-emerald-400 transition-colors cursor-pointer"
+                  >
+                    {job.company_name}
+                  </span>
                 </p>
               </div>
 

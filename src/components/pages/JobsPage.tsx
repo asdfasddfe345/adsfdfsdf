@@ -52,10 +52,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
 
   useSEO({
-    title: 'Latest Jobs - Fresher & Experienced Openings',
-    description: 'Browse the latest job openings across top companies in India. Find fresher jobs, experienced roles, remote positions, and more. Apply directly or use AI-powered auto-apply.',
+    title: 'Latest Jobs - Fresher & Experienced Openings at Top Companies',
+    description: 'Browse latest job openings at Google, TCS, Infosys, Wipro, Amazon & more top companies in India. Find fresher jobs, experienced roles, remote positions. Apply directly or use AI-powered auto-apply on PrimoBoost AI.',
     canonical: '/jobs',
     ogType: 'website',
+    twitterCard: 'summary_large_image',
   });
 
   const [jobs, setJobs] = useState<JobListing[]>([]);
@@ -192,18 +193,36 @@ export const JobsPage: React.FC<JobsPageProps> = ({
     if (result.jobs.length > 0) {
       const jobPostings = result.jobs.slice(0, 10).map((j: JobListing) => ({
         '@type': 'JobPosting',
-        title: j.title || '',
-        description: j.description?.substring(0, 200) || '',
+        title: j.role_title || '',
+        description: (j.short_description || j.description || '').substring(0, 500),
         datePosted: j.posted_date || j.created_at || '',
         hiringOrganization: {
           '@type': 'Organization',
-          name: j.company || '',
+          name: j.company_name || '',
+          ...(j.company_logo_url ? { logo: j.company_logo_url } : {}),
+          ...(j.company_website ? { sameAs: j.company_website } : {}),
         },
         jobLocation: {
           '@type': 'Place',
-          address: j.location || 'India',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: j.location_city || '',
+            addressCountry: 'IN',
+          },
         },
-        employmentType: j.job_type || 'FULL_TIME',
+        employmentType: 'FULL_TIME',
+        ...(j.package_amount ? {
+          baseSalary: {
+            '@type': 'MonetarySalary',
+            currency: j.package_currency || 'INR',
+            value: {
+              '@type': 'QuantitativeValue',
+              value: j.package_amount,
+            },
+          },
+        } : {}),
+        ...(j.skills && j.skills.length > 0 ? { skills: j.skills.join(', ') } : {}),
+        url: `https://primoboost.ai/jobs/${j.id}`,
       }));
       injectJsonLd('jobs-structured-data', {
         '@context': 'https://schema.org',

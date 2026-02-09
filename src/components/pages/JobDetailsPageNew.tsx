@@ -60,30 +60,58 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
   }, [job?.eligible_years]);
 
   useSEO({
-    title: job ? `${job.title} at ${job.company}` : 'Job Details',
-    description: job ? `Apply for ${job.title} at ${job.company}${job.location ? ` in ${job.location}` : ''}. ${job.description?.substring(0, 120) || ''}` : 'View job details and apply on PrimoBoost AI.',
+    title: job ? `${job.role_title} at ${job.company_name} - Apply Now` : 'Job Details',
+    description: job
+      ? `Apply for ${job.role_title} at ${job.company_name}${job.location_city ? ` in ${job.location_city}` : ''}.${job.experience_required ? ` ${job.experience_required} experience.` : ''}${job.qualification ? ` ${job.qualification}.` : ''} ${(job.short_description || job.description || '').substring(0, 150)}`
+      : 'View job details and apply on PrimoBoost AI.',
     canonical: jobId ? `/jobs/${jobId}` : '/jobs',
     ogType: 'article',
+    ogImage: job?.company_logo_url || undefined,
+    twitterCard: 'summary_large_image',
   });
 
   useEffect(() => {
     if (job) {
-      injectJsonLd('job-detail-structured-data', {
+      const jsonLd: Record<string, unknown> = {
         '@context': 'https://schema.org',
         '@type': 'JobPosting',
-        title: job.title || '',
-        description: job.description || '',
+        title: job.role_title || '',
+        description: job.full_description || job.description || '',
         datePosted: job.posted_date || job.created_at || '',
         hiringOrganization: {
           '@type': 'Organization',
-          name: job.company || '',
+          name: job.company_name || '',
+          ...(job.company_logo_url ? { logo: job.company_logo_url } : {}),
+          ...(job.company_website ? { sameAs: job.company_website } : {}),
+          ...(job.company_description ? { description: job.company_description } : {}),
         },
         jobLocation: {
           '@type': 'Place',
-          address: job.location || 'India',
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: job.location_city || '',
+            addressCountry: 'IN',
+          },
         },
-        employmentType: job.job_type || 'FULL_TIME',
-      });
+        employmentType: 'FULL_TIME',
+        url: `https://primoboost.ai/jobs/${job.id}`,
+        ...(job.qualification ? { qualifications: job.qualification } : {}),
+        ...(job.experience_required ? { experienceRequirements: job.experience_required } : {}),
+        ...(job.skills && job.skills.length > 0 ? { skills: job.skills.join(', ') } : {}),
+      };
+
+      if (job.package_amount) {
+        jsonLd.baseSalary = {
+          '@type': 'MonetarySalary',
+          currency: job.package_currency || 'INR',
+          value: {
+            '@type': 'QuantitativeValue',
+            value: job.package_amount,
+          },
+        };
+      }
+
+      injectJsonLd('job-detail-structured-data', jsonLd);
     }
     return () => removeJsonLd('job-detail-structured-data');
   }, [job]);
@@ -342,8 +370,11 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
                 {job.company_logo_url ? (
                   <img
                     src={job.company_logo_url}
-                    alt={`${job.company_name} logo`}
+                    alt={`${job.company_name} logo - ${job.role_title} job opening`}
                     className="w-20 h-20 rounded-xl object-contain bg-slate-700/50 p-2 border border-slate-600"
+                    loading="eager"
+                    width={80}
+                    height={80}
                   />
                 ) : (
                   <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
@@ -356,7 +387,15 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
                     {job.role_title}
                   </h1>
                   <p className="text-xl text-slate-300 mb-3">
-                    {job.company_name}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/jobs/company/${job.company_name.toLowerCase().replace(/\s+/g, '-')}`);
+                      }}
+                      className="hover:text-emerald-400 transition-colors"
+                    >
+                      {job.company_name}
+                    </button>
                   </p>
 
                   <div className="flex flex-wrap gap-2">

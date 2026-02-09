@@ -10,6 +10,7 @@ export interface JobListing {
   role_title: string;
   package_amount?: number;
   package_currency?: string;
+  package_type?: string;
   domain: string;
   location_type: 'Remote' | 'Onsite' | 'Hybrid';
   location_city?: string;
