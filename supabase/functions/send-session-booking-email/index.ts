@@ -68,13 +68,6 @@ function buildClientConfirmationHtml(data: BookingEmailRequest, siteUrl: string)
       <div class="detail-row"><strong>Booking Code:</strong> ${data.bookingCode}</div>
     </div>
 
-    ${data.meetLink ? `
-    <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center;">
-      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: bold; color: #1e40af;">Join Your Session</p>
-      <a href="${data.meetLink}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px;">Join Meeting</a>
-      <p style="margin: 12px 0 0 0; font-size: 12px; color: #6b7280; word-break: break-all;">${data.meetLink}</p>
-    </div>
-    ` : ''}
 
     ${data.bonusCredits > 0 ? `
     <div class="bonus-box">
@@ -94,7 +87,12 @@ function buildClientConfirmationHtml(data: BookingEmailRequest, siteUrl: string)
     </div>
 
     <div style="text-align: center; margin: 28px 0;">
+      ${data.meetLink ? `
+      <a href="${data.meetLink}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; padding: 16px 40px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 16px; letter-spacing: 0.5px;">Join Meeting</a>
+      <p style="margin: 12px 0 0 0; font-size: 12px; color: #6b7280; word-break: break-all;">${data.meetLink}</p>
+      ` : `
       <a href="${siteUrl}/my-bookings" class="cta-button">View My Bookings</a>
+      `}
     </div>
 
     <div class="footer">
@@ -209,7 +207,12 @@ function buildReminderHtml(data: BookingEmailRequest, siteUrl: string): string {
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
+      ${data.meetLink ? `
+      <a href="${data.meetLink}" style="display: inline-block; background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; padding: 16px 40px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 16px; letter-spacing: 0.5px;">Join Meeting</a>
+      <p style="margin: 12px 0 0 0; font-size: 12px; color: #6b7280; word-break: break-all;">${data.meetLink}</p>
+      ` : `
       <a href="${siteUrl}/my-bookings" class="cta-button">View My Bookings</a>
+      `}
     </div>
 
     <div class="footer">
