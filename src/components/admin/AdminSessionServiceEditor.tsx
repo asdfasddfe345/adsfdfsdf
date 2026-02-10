@@ -68,8 +68,24 @@ export const AdminSessionServiceEditor: React.FC = () => {
     setLoading(false);
   };
 
+  const validateForm = () => {
+    if (!title.trim()) return 'Title is required';
+    if (priceRupees <= 0) return 'Price must be greater than 0';
+    if (priceRupees < 1) return 'Price must be at least ₹1';
+    if (!timeSlots.filter((t) => t.trim()).length) return 'At least one time slot is required';
+    return null;
+  };
+
   const handleSave = async () => {
     if (!service) return;
+
+    const validationError = validateForm();
+    if (validationError) {
+      setSaveStatus({ type: 'error', message: validationError });
+      setTimeout(() => setSaveStatus(null), 4000);
+      return;
+    }
+
     setSaving(true);
     setSaveStatus(null);
 
@@ -186,8 +202,18 @@ export const AdminSessionServiceEditor: React.FC = () => {
                     min={0}
                     value={priceRupees}
                     onChange={(e) => setPriceRupees(Number(e.target.value))}
-                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                    className={`w-full bg-slate-900/50 border rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-1 ${
+                      priceRupees <= 0
+                        ? 'border-red-500/50 focus:ring-red-500/50'
+                        : 'border-slate-700 focus:ring-emerald-500/50'
+                    }`}
                   />
+                  {priceRupees <= 0 && (
+                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      Price must be greater than ₹0
+                    </p>
+                  )}
                 </FieldGroup>
 
                 <FieldGroup icon={<Gift className="w-4 h-4" />} label="Bonus Credits">
@@ -317,8 +343,9 @@ export const AdminSessionServiceEditor: React.FC = () => {
                 </AnimatePresence>
                 <button
                   onClick={handleSave}
-                  disabled={saving}
-                  className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+                  disabled={saving || !!validateForm()}
+                  title={validateForm() || 'Save changes'}
+                  className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
                 >
                   {saving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

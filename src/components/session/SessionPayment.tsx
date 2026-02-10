@@ -49,8 +49,16 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
     });
   };
 
+  const isPriceValid = service.price && service.price > 0;
+  const priceError = !isPriceValid ? 'Service pricing is not configured. Please contact support.' : null;
+
   const handlePayNow = async () => {
     if (!user) return;
+
+    if (!isPriceValid) {
+      setError(priceError);
+      return;
+    }
 
     setProcessing(true);
     setError(null);
@@ -253,9 +261,10 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
       {/* Pay Button */}
       <motion.button
         onClick={handlePayNow}
-        disabled={processing}
-        whileHover={!processing ? { scale: 1.02 } : {}}
-        whileTap={!processing ? { scale: 0.98 } : {}}
+        disabled={processing || !isPriceValid}
+        whileHover={!processing && isPriceValid ? { scale: 1.02 } : {}}
+        whileTap={!processing && isPriceValid ? { scale: 0.98 } : {}}
+        title={!isPriceValid ? 'Service pricing not configured' : 'Proceed to payment'}
         className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
       >
         {processing ? (
