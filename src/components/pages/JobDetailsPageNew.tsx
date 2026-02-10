@@ -351,13 +351,6 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
                     <Zap className="w-5 h-5" />
                     Apply Now
                   </button>
-                  <button
-                    onClick={() => job.application_link && window.open(job.application_link, '_blank')}
-                    className="border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500 font-medium py-3 px-6 rounded-xl transition-colors flex items-center gap-2"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Company Site
-                  </button>
                 </div>
               </div>
             </div>
@@ -587,66 +580,6 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
                   <Zap className="w-5 h-5" />
                   Apply Now
                 </button>
-                <button
-                  onClick={() => job.application_link && window.open(job.application_link, '_blank')}
-                  className="w-full mt-2.5 border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500 font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Apply on Company Site
-                </button>
-              </div>
-
-              {/* Quick Info */}
-              <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
-                <h3 className="text-base font-bold text-white mb-4">Job Overview</h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-blue-500/10 p-2 rounded-lg mt-0.5"><Briefcase className="w-4 h-4 text-blue-400" /></div>
-                    <div>
-                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Role</p>
-                      <p className="text-sm font-medium text-white">{job.role_title}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-emerald-500/10 p-2 rounded-lg mt-0.5"><Building2 className="w-4 h-4 text-emerald-400" /></div>
-                    <div>
-                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Company</p>
-                      <p className="text-sm font-medium text-white">{job.company_name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-cyan-500/10 p-2 rounded-lg mt-0.5"><MapPin className="w-4 h-4 text-cyan-400" /></div>
-                    <div>
-                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Location</p>
-                      <p className="text-sm font-medium text-white">{job.location_city || job.location_type}</p>
-                    </div>
-                  </div>
-                  {job.package_amount && job.package_type && (
-                    <div className="flex items-start gap-3">
-                      <div className="bg-amber-500/10 p-2 rounded-lg mt-0.5"><IndianRupee className="w-4 h-4 text-amber-400" /></div>
-                      <div>
-                        <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Compensation</p>
-                        <p className="text-sm font-medium text-white">{formatSalary(job.package_amount, job.package_type)}</p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-start gap-3">
-                    <div className="bg-rose-500/10 p-2 rounded-lg mt-0.5"><Clock className="w-4 h-4 text-rose-400" /></div>
-                    <div>
-                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Experience</p>
-                      <p className="text-sm font-medium text-white">{job.experience_required}</p>
-                    </div>
-                  </div>
-                  {eligibleYearTags.length > 0 && (
-                    <div className="flex items-start gap-3">
-                      <div className="bg-green-500/10 p-2 rounded-lg mt-0.5"><GraduationCap className="w-4 h-4 text-green-400" /></div>
-                      <div>
-                        <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Eligible Batches</p>
-                        <p className="text-sm font-medium text-white">{eligibleYearTags.join(' / ')}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Short Description */}
@@ -663,21 +596,13 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
 
       {/* Fixed Bottom Apply (Mobile) */}
       <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/40 p-3 shadow-2xl z-40">
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleApplyClick}
-            className="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
-          >
-            <Zap className="w-5 h-5" />
-            Apply Now
-          </button>
-          <button
-            onClick={() => job.application_link && window.open(job.application_link, '_blank')}
-            className="py-3.5 px-4 border border-slate-600 text-slate-300 rounded-xl transition-colors"
-          >
-            <ExternalLink className="w-5 h-5" />
-          </button>
-        </div>
+        <button
+          onClick={handleApplyClick}
+          className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+        >
+          <Zap className="w-5 h-5" />
+          Apply Now
+        </button>
       </div>
 
       <ApplicationMethodModal
