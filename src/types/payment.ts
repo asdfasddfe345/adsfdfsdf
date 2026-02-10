@@ -1,21 +1,25 @@
+export type PlanCategory = 'combined' | 'jd_only' | 'score_only' | 'combo';
+
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  price: number; // This will be the offer price
-  mrp: number; // New: Manufacturer's Recommended Price
-  discountPercentage: number; // New: Calculated discount percentage
+  price: number;
+  mrp: number;
+  discountPercentage: number;
   duration: string;
   optimizations: number;
   scoreChecks: number;
-  linkedinMessages: number; // Changed from typeof Infinity to number
+  linkedinMessages: number;
   guidedBuilds: number;
+  sessions: number;
+  category: PlanCategory;
   tag: string;
   tagColor: string;
   gradient: string;
   icon: string;
   features: string[];
   popular?: boolean;
-  durationInHours: number; // Added this property
+  durationInHours: number;
 }
 
 
