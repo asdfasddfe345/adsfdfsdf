@@ -70,8 +70,7 @@ export const AdminSessionServiceEditor: React.FC = () => {
 
   const validateForm = () => {
     if (!title.trim()) return 'Title is required';
-    if (priceRupees <= 0) return 'Price must be greater than 0';
-    if (priceRupees < 1) return 'Price must be at least ₹1';
+    if (priceRupees < 0) return 'Price cannot be negative';
     if (!timeSlots.filter((t) => t.trim()).length) return 'At least one time slot is required';
     return null;
   };
@@ -203,15 +202,21 @@ export const AdminSessionServiceEditor: React.FC = () => {
                     value={priceRupees}
                     onChange={(e) => setPriceRupees(Number(e.target.value))}
                     className={`w-full bg-slate-900/50 border rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-1 ${
-                      priceRupees <= 0
+                      priceRupees < 0
                         ? 'border-red-500/50 focus:ring-red-500/50'
                         : 'border-slate-700 focus:ring-emerald-500/50'
                     }`}
                   />
-                  {priceRupees <= 0 && (
+                  {priceRupees === 0 && (
+                    <p className="text-amber-400 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      Free session - no payment required
+                    </p>
+                  )}
+                  {priceRupees < 0 && (
                     <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5" />
-                      Price must be greater than ₹0
+                      Price cannot be negative
                     </p>
                   )}
                 </FieldGroup>

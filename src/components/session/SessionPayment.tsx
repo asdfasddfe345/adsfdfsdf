@@ -9,6 +9,7 @@ import {
   Loader2,
   AlertTriangle,
   Shield,
+  CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { sessionBookingService } from '../../services/sessionBookingService';
@@ -37,6 +38,7 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const priceInRupees = service.price / 100;
+  const isFreeSession = service.price === 0;
   const slotLabel = sessionBookingService.getSlotLabel(selectedSlot);
 
   const formatDate = (dateStr: string) => {
@@ -49,16 +51,61 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
     });
   };
 
-  const isPriceValid = service.price && service.price > 0;
-  const priceError = !isPriceValid ? 'Service pricing is not configured. Please contact support.' : null;
-
-  const handlePayNow = async () => {
+  const handleFreeBooking = async () => {
     if (!user) return;
 
-    if (!isPriceValid) {
-      setError(priceError);
-      return;
+    setProcessing(true);
+    setError(null);
+
+    try {
+      const result = await sessionBookingService.bookSlot(
+        user.id,
+        service.id,
+        selectedDate,
+        selectedSlot,
+        null,
+        user.name,
+        user.email,
+        ''
+      );
+
+      setProcessing(false);
+
+      if (result.success) {
+        try {
+          await supabase.functions.invoke('send-session-booking-email', {
+            body: {
+              bookingId: result.booking_id || '',
+              recipientEmail: user.email,
+              recipientName: user.name,
+              serviceTitle: service.title,
+              bookingDate: formatDate(selectedDate),
+              slotLabel,
+              bookingCode: result.booking_code || '',
+              bonusCredits: result.bonus_credits || 0,
+            },
+          });
+        } catch (emailErr) {
+          console.error('Failed to send booking confirmation email:', emailErr);
+        }
+        onSuccess(result);
+      } else if (
+        result.error?.includes('no longer available') ||
+        result.error?.includes('already taken')
+      ) {
+        onSlotTaken();
+      } else {
+        setError(result.error || 'Booking failed. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Free booking error:', err);
+      setError('Something went wrong. Please try again.');
+      setProcessing(false);
     }
+  };
+
+  const handlePaidBooking = async () => {
+    if (!user) return;
 
     setProcessing(true);
     setError(null);
@@ -192,6 +239,14 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
     }
   };
 
+  const handleConfirm = () => {
+    if (isFreeSession) {
+      handleFreeBooking();
+    } else {
+      handlePaidBooking();
+    }
+  };
+
   return (
     <div className="w-full max-w-md mx-auto">
       <button
@@ -204,7 +259,7 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
       </button>
 
       <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">
-        Confirm & Pay
+        {isFreeSession ? 'Confirm Booking' : 'Confirm & Pay'}
       </h2>
 
       {/* Summary Card */}
@@ -242,12 +297,23 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
       </div>
 
       {/* Amount */}
-      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 mb-6">
+      <div className={`border rounded-xl p-5 mb-6 ${
+        isFreeSession
+          ? 'bg-emerald-500/10 border-emerald-500/30'
+          : 'bg-emerald-500/5 border-emerald-500/20'
+      }`}>
         <div className="flex items-center justify-between">
           <span className="text-slate-300 font-medium">Total Amount</span>
-          <span className="text-2xl font-bold text-white">
-            {'\u20B9'}{priceInRupees.toLocaleString('en-IN')}
-          </span>
+          {isFreeSession ? (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-emerald-400" />
+              <span className="text-2xl font-bold text-emerald-400">FREE</span>
+            </div>
+          ) : (
+            <span className="text-2xl font-bold text-white">
+              {'\u20B9'}{priceInRupees.toLocaleString('en-IN')}
+            </span>
+          )}
         </div>
       </div>
 
@@ -258,20 +324,21 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
         </div>
       )}
 
-      {/* Pay Button */}
+      {/* Confirm / Pay Button */}
       <motion.button
-        onClick={handlePayNow}
-        disabled={processing || !isPriceValid}
-        whileHover={!processing && isPriceValid ? { scale: 1.02 } : {}}
-        whileTap={!processing && isPriceValid ? { scale: 0.98 } : {}}
-        title={!isPriceValid ? 'Service pricing not configured' : 'Proceed to payment'}
+        onClick={handleConfirm}
+        disabled={processing}
+        whileHover={!processing ? { scale: 1.02 } : {}}
+        whileTap={!processing ? { scale: 0.98 } : {}}
         className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
       >
         {processing ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            Processing...
+            {isFreeSession ? 'Booking...' : 'Processing...'}
           </>
+        ) : isFreeSession ? (
+          'Confirm Booking'
         ) : (
           <>
             Pay Now {'\u20B9'}{priceInRupees.toLocaleString('en-IN')}
@@ -279,10 +346,12 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
         )}
       </motion.button>
 
-      <div className="flex items-center justify-center gap-1.5 mt-4 text-slate-500 text-xs">
-        <Shield className="w-3.5 h-3.5" />
-        <span>Secured by Razorpay</span>
-      </div>
+      {!isFreeSession && (
+        <div className="flex items-center justify-center gap-1.5 mt-4 text-slate-500 text-xs">
+          <Shield className="w-3.5 h-3.5" />
+          <span>Secured by Razorpay</span>
+        </div>
+      )}
     </div>
   );
 };
