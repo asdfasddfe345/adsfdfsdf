@@ -83,6 +83,7 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
               slotLabel,
               bookingCode: result.booking_code || '',
               bonusCredits: result.bonus_credits || 0,
+              meetLink: service.meet_link || '',
             },
           });
         } catch (emailErr) {
@@ -195,6 +196,7 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
                   slotLabel,
                   bookingCode: result.booking_code || '',
                   bonusCredits: result.bonus_credits || 0,
+                  meetLink: service.meet_link || '',
                 },
               });
             } catch (emailErr) {

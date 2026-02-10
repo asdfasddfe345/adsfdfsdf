@@ -17,6 +17,7 @@ interface BookingEmailRequest {
   slotLabel: string;
   bookingCode: string;
   bonusCredits: number;
+  meetLink?: string;
 }
 
 function buildClientConfirmationHtml(data: BookingEmailRequest, siteUrl: string): string {
@@ -66,6 +67,14 @@ function buildClientConfirmationHtml(data: BookingEmailRequest, siteUrl: string)
       <div class="detail-row"><strong>Time:</strong> ${data.slotLabel}</div>
       <div class="detail-row"><strong>Booking Code:</strong> ${data.bookingCode}</div>
     </div>
+
+    ${data.meetLink ? `
+    <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center;">
+      <p style="margin: 0 0 12px 0; font-size: 16px; font-weight: bold; color: #1e40af;">Join Your Session</p>
+      <a href="${data.meetLink}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px;">Join Meeting</a>
+      <p style="margin: 12px 0 0 0; font-size: 12px; color: #6b7280; word-break: break-all;">${data.meetLink}</p>
+    </div>
+    ` : ''}
 
     ${data.bonusCredits > 0 ? `
     <div class="bonus-box">
@@ -136,6 +145,7 @@ function buildMentorNotificationHtml(data: BookingEmailRequest): string {
       <div class="detail-row"><span class="label">Date</span><span class="value">${data.bookingDate}</span></div>
       <div class="detail-row"><span class="label">Time Slot</span><span class="value">${data.slotLabel}</span></div>
       <div class="detail-row"><span class="label">Booking Code</span><span class="value">${data.bookingCode}</span></div>
+      ${data.meetLink ? `<div class="detail-row"><span class="label">Meet Link</span><span class="value"><a href="${data.meetLink}" style="color: #2563eb;">${data.meetLink}</a></span></div>` : ''}
     </div>
 
     <div class="footer">

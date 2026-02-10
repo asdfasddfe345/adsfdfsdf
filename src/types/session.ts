@@ -11,6 +11,7 @@ export interface SessionService {
   bonus_credits: number;
   max_slots_per_day: number;
   time_slots: string[];
+  meet_link: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;

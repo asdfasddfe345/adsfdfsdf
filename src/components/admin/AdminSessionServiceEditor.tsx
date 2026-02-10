@@ -18,6 +18,7 @@ import {
   Users,
   Clock,
   ListChecks,
+  Video,
 } from 'lucide-react';
 import { adminSessionService } from '../../services/adminSessionService';
 import { sessionBookingService } from '../../services/sessionBookingService';
@@ -42,6 +43,7 @@ export const AdminSessionServiceEditor: React.FC = () => {
   const [bonusCredits, setBonusCredits] = useState(0);
   const [maxSlots, setMaxSlots] = useState(5);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [meetLink, setMeetLink] = useState('');
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export const AdminSessionServiceEditor: React.FC = () => {
         setBonusCredits(full.bonus_credits);
         setMaxSlots(full.max_slots_per_day);
         setTimeSlots([...(full.time_slots || [])]);
+        setMeetLink(full.meet_link || '');
         setIsActive(full.is_active);
       }
     }
@@ -96,6 +99,7 @@ export const AdminSessionServiceEditor: React.FC = () => {
       bonus_credits: bonusCredits,
       max_slots_per_day: maxSlots,
       time_slots: timeSlots.filter((t) => t.trim() !== ''),
+      meet_link: meetLink.trim(),
       is_active: isActive,
     });
 
@@ -299,6 +303,19 @@ export const AdminSessionServiceEditor: React.FC = () => {
                     Add Time Slot
                   </button>
                 </div>
+              </FieldGroup>
+
+              <FieldGroup icon={<Video className="w-4 h-4" />} label="Google Meet / Video Call Link">
+                <input
+                  type="url"
+                  value={meetLink}
+                  onChange={(e) => setMeetLink(e.target.value)}
+                  placeholder="https://meet.google.com/abc-defg-hij"
+                  className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                />
+                <p className="text-slate-500 text-xs mt-1">
+                  This link will be shared with all users who book this session and included in confirmation emails.
+                </p>
               </FieldGroup>
 
               <div className="flex items-center justify-between bg-slate-900/30 rounded-lg px-4 py-3">

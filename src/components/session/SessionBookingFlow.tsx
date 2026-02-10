@@ -199,6 +199,7 @@ export const SessionBookingFlow: React.FC = () => {
                 bookingResult={booking.bookingResult}
                 selectedDate={booking.selectedDate}
                 selectedSlot={booking.selectedSlot}
+                meetLink={booking.service?.meet_link}
               />
             </motion.div>
           )}

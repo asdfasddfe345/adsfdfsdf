@@ -10,6 +10,8 @@ import {
   LayoutDashboard,
   List,
   Download,
+  Video,
+  ExternalLink,
 } from 'lucide-react';
 import { sessionBookingService } from '../../services/sessionBookingService';
 import type { BookingResult } from '../../types/session';
@@ -18,12 +20,14 @@ interface SessionBookingSuccessProps {
   bookingResult: BookingResult;
   selectedDate: string;
   selectedSlot: string;
+  meetLink?: string;
 }
 
 export const SessionBookingSuccess: React.FC<SessionBookingSuccessProps> = ({
   bookingResult,
   selectedDate,
   selectedSlot,
+  meetLink,
 }) => {
   const navigate = useNavigate();
   const slotLabel = sessionBookingService.getSlotLabel(selectedSlot);
@@ -130,6 +134,28 @@ export const SessionBookingSuccess: React.FC<SessionBookingSuccessProps> = ({
           </div>
         </div>
       </motion.div>
+
+      {/* Meet Link */}
+      {meetLink && (
+        <motion.a
+          href={meetLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
+          className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6 hover:bg-blue-500/15 transition-colors group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <Video className="w-5 h-5 text-blue-400" />
+          </div>
+          <div className="text-left flex-1">
+            <p className="text-blue-300 text-sm font-semibold">Join Meeting Link</p>
+            <p className="text-slate-400 text-xs truncate">{meetLink}</p>
+          </div>
+          <ExternalLink className="w-4 h-4 text-blue-400 group-hover:text-blue-300 flex-shrink-0" />
+        </motion.a>
+      )}
 
       {/* Credits Badge */}
       {bookingResult.bonus_credits && bookingResult.bonus_credits > 0 && (

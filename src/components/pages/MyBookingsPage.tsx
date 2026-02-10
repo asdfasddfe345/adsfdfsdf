@@ -14,6 +14,7 @@ import {
   Video,
   UserCheck,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { sessionBookingService } from '../../services/sessionBookingService';
@@ -425,6 +426,19 @@ const SessionCard: React.FC<SessionCardProps> = ({
           <span className="font-mono text-xs">{booking.booking_code}</span>
         </div>
       </div>
+
+      {isUpcoming && booking.session_services?.meet_link && (
+        <a
+          href={booking.session_services.meet_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium hover:bg-blue-500/20 transition-colors group"
+        >
+          <Video className="w-4 h-4" />
+          <span className="flex-1 truncate text-xs">{booking.session_services.meet_link}</span>
+          <ExternalLink className="w-3.5 h-3.5 flex-shrink-0 group-hover:text-blue-300" />
+        </a>
+      )}
 
       {isUpcoming && (
         <div className="mt-4 pt-3 border-t border-slate-700/50">
