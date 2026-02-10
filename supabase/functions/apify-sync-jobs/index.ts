@@ -65,7 +65,20 @@ Deno.serve(async (req: Request) => {
     }
 
     if (configs.length === 0) {
-      throw new Error('No active configurations found');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'No active configurations found. Please add an Apify configuration first.',
+          results: [],
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     }
 
     const results = [];

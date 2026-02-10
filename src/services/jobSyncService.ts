@@ -122,9 +122,17 @@ class JobSyncService {
         throw new Error(response.error.message);
       }
 
+      const data = response.data;
+      if (data && !data.success) {
+        return {
+          success: false,
+          error: data.error || 'Sync failed',
+        };
+      }
+
       return {
         success: true,
-        stats: response.data,
+        stats: data,
       };
     } catch (error) {
       console.error('Error triggering sync:', error);
