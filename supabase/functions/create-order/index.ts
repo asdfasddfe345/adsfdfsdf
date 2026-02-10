@@ -1,11 +1,10 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Max-Age': '86400',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 interface OrderRequest {
@@ -39,6 +38,7 @@ interface PlanConfig {
   scoreChecks: number;
   linkedinMessages: number;
   guidedBuilds: number;
+  sessions: number;
   durationInHours: number;
   tag: string;
   tagColor: string;
@@ -50,183 +50,245 @@ interface PlanConfig {
 
 const plans: PlanConfig[] = [
   {
-    id: 'leader_plan',
-    name: 'Leader Plan',
-    price: 6400,
-    mrp: 12800,
-    discountPercentage: 50,
+    id: 'career_boost',
+    name: 'Career Boost Plan',
+    price: 1999,
+    mrp: 3925,
+    discountPercentage: 49,
     duration: 'One-time Purchase',
-    optimizations: 100,
-    scoreChecks: 100,
+    optimizations: 50,
+    scoreChecks: 25,
     linkedinMessages: 0,
     guidedBuilds: 0,
-    tag: 'Top Tier',
-    tagColor: 'text-purple-800 bg-purple-100',
-    gradient: 'from-purple-500 to-indigo-500',
+    sessions: 1,
+    tag: 'Premium',
+    tagColor: 'text-emerald-800 bg-emerald-100',
+    gradient: 'from-emerald-500 to-cyan-500',
+    icon: 'zap',
+    features: ['50 JD-Based Resume Optimizations', '25 Resume Score Checks', '1 Resume Review Session'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'career_pro',
+    name: 'Career Pro Plan',
+    price: 2999,
+    mrp: 6850,
+    discountPercentage: 56,
+    duration: 'One-time Purchase',
+    optimizations: 100,
+    scoreChecks: 50,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 1,
+    tag: 'Most Popular',
+    tagColor: 'text-amber-800 bg-amber-100',
+    gradient: 'from-amber-500 to-orange-500',
     icon: 'crown',
-    features: [
-      '✅ 100 Resume Optimizations',
-      '✅ 100 Score Checks',
-      '❌ LinkedIn Messages',
-      '❌ Guided Builds',
-      '✅ Priority Support',
-    ],
+    features: ['100 JD-Based Resume Optimizations', '50 Resume Score Checks', '1 Resume Review Session'],
     popular: true,
     durationInHours: 8760,
   },
   {
-    id: 'achiever_plan',
-    name: 'Achiever Plan',
-    price: 3200,
-    mrp: 6400,
-    discountPercentage: 50,
+    id: 'jd_starter',
+    name: 'JD Starter',
+    price: 89,
+    mrp: 245,
+    discountPercentage: 64,
+    duration: 'One-time Purchase',
+    optimizations: 5,
+    scoreChecks: 0,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-teal-500 to-emerald-500',
+    icon: 'target',
+    features: ['5 JD-Based Resume Optimizations'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'jd_basic',
+    name: 'JD Basic',
+    price: 169,
+    mrp: 490,
+    discountPercentage: 65,
+    duration: 'One-time Purchase',
+    optimizations: 10,
+    scoreChecks: 0,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-teal-500 to-emerald-500',
+    icon: 'target',
+    features: ['10 JD-Based Resume Optimizations'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'jd_advanced',
+    name: 'JD Advanced',
+    price: 799,
+    mrp: 2450,
+    discountPercentage: 67,
+    duration: 'One-time Purchase',
+    optimizations: 50,
+    scoreChecks: 0,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-teal-500 to-emerald-500',
+    icon: 'target',
+    features: ['50 JD-Based Resume Optimizations'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'jd_pro',
+    name: 'JD Pro',
+    price: 1499,
+    mrp: 4900,
+    discountPercentage: 69,
+    duration: 'One-time Purchase',
+    optimizations: 100,
+    scoreChecks: 0,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-teal-500 to-emerald-500',
+    icon: 'target',
+    features: ['100 JD-Based Resume Optimizations'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'score_starter',
+    name: 'Score Starter',
+    price: 39,
+    mrp: 95,
+    discountPercentage: 59,
+    duration: 'One-time Purchase',
+    optimizations: 0,
+    scoreChecks: 5,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-blue-500 to-cyan-500',
+    icon: 'check_circle',
+    features: ['5 Resume Score Checks'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'score_basic',
+    name: 'Score Basic',
+    price: 79,
+    mrp: 190,
+    discountPercentage: 58,
+    duration: 'One-time Purchase',
+    optimizations: 0,
+    scoreChecks: 10,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-blue-500 to-cyan-500',
+    icon: 'check_circle',
+    features: ['10 Resume Score Checks'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'score_advanced',
+    name: 'Score Advanced',
+    price: 349,
+    mrp: 950,
+    discountPercentage: 63,
+    duration: 'One-time Purchase',
+    optimizations: 0,
+    scoreChecks: 50,
+    linkedinMessages: 0,
+    guidedBuilds: 0,
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-blue-500 to-cyan-500',
+    icon: 'check_circle',
+    features: ['50 Resume Score Checks'],
+    popular: false,
+    durationInHours: 8760,
+  },
+  {
+    id: 'combo_starter',
+    name: 'Combo Starter',
+    price: 999,
+    mrp: 3400,
+    discountPercentage: 71,
     duration: 'One-time Purchase',
     optimizations: 50,
     scoreChecks: 50,
     linkedinMessages: 0,
     guidedBuilds: 0,
-    tag: 'Best Value',
-    tagColor: 'text-blue-800 bg-blue-100',
-    gradient: 'from-blue-500 to-cyan-500',
-    icon: 'zap',
-    features: [
-      '✅ 50 Resume Optimizations',
-      '✅ 50 Score Checks',
-      '❌ LinkedIn Messages',
-      '❌ Guided Builds',
-      '✅ Standard Support',
-    ],
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-sky-500 to-blue-500',
+    icon: 'briefcase',
+    features: ['50 JD-Based Resume Optimizations', '50 Resume Score Checks'],
     popular: false,
     durationInHours: 8760,
   },
   {
-    id: 'accelerator_plan',
-    name: 'Accelerator Plan',
-    price: 1600,
-    mrp: 3200,
-    discountPercentage: 50,
+    id: 'combo_pro',
+    name: 'Combo Pro',
+    price: 1899,
+    mrp: 6800,
+    discountPercentage: 72,
     duration: 'One-time Purchase',
-    optimizations: 25,
-    scoreChecks: 25,
+    optimizations: 100,
+    scoreChecks: 100,
     linkedinMessages: 0,
     guidedBuilds: 0,
-    tag: 'Great Start',
-    tagColor: 'text-green-800 bg-green-100',
-    gradient: 'from-green-500 to-emerald-500',
-    icon: 'rocket',
-    features: [
-      '✅ 25 Resume Optimizations',
-      '✅ 25 Score Checks',
-      '❌ LinkedIn Messages',
-      '❌ Guided Builds',
-      '✅ Email Support',
-    ],
-    popular: false,
-    durationInHours: 8760,
-  },
-  {
-    id: 'starter_plan',
-    name: 'Starter Plan',
-    price: 640,
-    mrp: 1280,
-    discountPercentage: 50,
-    duration: 'One-time Purchase',
-    optimizations: 10,
-    scoreChecks: 10,
-    linkedinMessages: 0,
-    guidedBuilds: 0,
-    tag: 'Quick Boost',
-    tagColor: 'text-yellow-800 bg-yellow-100',
-    gradient: 'from-yellow-500 to-orange-500',
-    icon: 'target',
-    features: [
-      '✅ 10 Resume Optimizations',
-      '✅ 10 Score Checks',
-      '❌ LinkedIn Messages',
-      '❌ Guided Builds',
-      '✅ Basic Support',
-    ],
-    popular: false,
-    durationInHours: 8760,
-  },
-  {
-    id: 'kickstart_plan',
-    name: 'Kickstart Plan',
-    price: 320,
-    mrp: 640,
-    discountPercentage: 50,
-    duration: 'One-time Purchase',
-    optimizations: 5,
-    scoreChecks: 5,
-    linkedinMessages: 0,
-    guidedBuilds: 0,
-    tag: 'Essential',
-    tagColor: 'text-red-800 bg-red-100',
-    gradient: 'from-red-500 to-pink-500',
-    icon: 'wrench',
-    features: [
-      '✅ 5 Resume Optimizations',
-      '✅ 5 Score Checks',
-      '❌ LinkedIn Messages',
-      '❌ Guided Builds',
-      '❌ Priority Support',
-    ],
+    sessions: 0,
+    tag: '',
+    tagColor: '',
+    gradient: 'from-sky-500 to-blue-500',
+    icon: 'briefcase',
+    features: ['100 JD-Based Resume Optimizations', '100 Resume Score Checks'],
     popular: false,
     durationInHours: 8760,
   },
 ];
 
 const addOns = [
-  {
-    id: 'jd_optimization_single_purchase',
-    name: 'JD-Based Optimization (1 Use)',
-    price: 19,
-    type: 'optimization',
-    quantity: 1,
-  },
-  {
-    id: 'resume_score_check_single_purchase',
-    name: 'Resume Score Check (1 Use)',
-    price: 19,
-    type: 'score_check',
-    quantity: 1,
-  },
+  { id: 'jd_optimization_single_purchase', name: 'JD-Based Optimization (1 Use)', price: 19, type: 'optimization', quantity: 1 },
+  { id: 'resume_score_check_single_purchase', name: 'Resume Score Check (1 Use)', price: 9, type: 'score_check', quantity: 1 },
 ];
 
-serve(async (req) => {
-  console.log(`[${new Date().toISOString()}] - Function execution started.`);
-  console.log(`[${new Date().toISOString()}] - Request method: ${req.method}`);
-  console.log(`[${new Date().toISOString()}] - Request headers:`, Object.fromEntries(req.headers.entries()));
-
+Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  let requestBody: any;
-  
   try {
     const bodyText = await req.text();
-    console.log(`[${new Date().toISOString()}] - Raw request body:`, bodyText);
-    requestBody = JSON.parse(bodyText);
-    
-    const { planId, couponCode, walletDeduction, addOnsTotal, amount: frontendCalculatedAmount, selectedAddOns, metadata, testMode } = requestBody as OrderRequest;
-    
-    console.log(`[${new Date().toISOString()}] - Parsed request:`, {
-      planId,
-      couponCode,
-      walletDeduction,
-      addOnsTotal,
-      frontendCalculatedAmount,
-      selectedAddOns,
-      metadata
-    });
+    const requestBody = JSON.parse(bodyText);
 
-    // Get user from auth header
+    const { planId, couponCode, walletDeduction, addOnsTotal, amount: frontendCalculatedAmount, selectedAddOns, metadata, testMode } = requestBody as OrderRequest;
+
     const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      console.error(`[${new Date().toISOString()}] - No authorization header`);
-      throw new Error('No authorization header');
-    }
+    if (!authHeader) throw new Error('No authorization header');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -234,102 +296,42 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
-    console.log(`[${new Date().toISOString()}] - User authentication complete. User ID: ${user?.id || 'N/A'}`);
-
-    if (userError || !user) {
-      console.error(`[${new Date().toISOString()}] - User authentication failed:`, userError);
-      throw new Error('Invalid user token');
-    }
+    if (userError || !user) throw new Error('Invalid user token');
 
     const isWebinarPayment = metadata?.type === 'webinar';
     const isSessionBooking = metadata?.type === 'session_booking';
 
-    let originalPrice = 0; // in paise
-    let finalAmount = 0;   // in paise
-    let discountAmount = 0; // in paise
+    let originalPrice = 0;
+    let finalAmount = 0;
+    let discountAmount = 0;
     let appliedCoupon: string | null = null;
 
     if (isSessionBooking) {
-      console.log(`[${new Date().toISOString()}] - Processing session booking payment`);
-
       if (!metadata?.serviceId) {
-        return new Response(
-          JSON.stringify({ error: 'Missing service ID for session booking' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-        );
+        return new Response(JSON.stringify({ error: 'Missing service ID for session booking' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-
-      const { data: serviceRow, error: serviceErr } = await supabase
-        .from('session_services')
-        .select('price, title')
-        .eq('id', metadata.serviceId)
-        .single();
-
+      const { data: serviceRow, error: serviceErr } = await supabase.from('session_services').select('price, title').eq('id', metadata.serviceId).single();
       if (serviceErr || !serviceRow) {
-        console.error(`[${new Date().toISOString()}] - Unable to fetch session service:`, serviceErr);
-        return new Response(
-          JSON.stringify({ error: 'Unable to fetch session service pricing' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-        );
+        return new Response(JSON.stringify({ error: 'Unable to fetch session service pricing' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-
       originalPrice = Number(serviceRow.price || 0);
       if (!originalPrice || originalPrice <= 0) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid session service price' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-        );
+        return new Response(JSON.stringify({ error: 'Invalid session service price' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-
       finalAmount = originalPrice;
-
-      if (frontendCalculatedAmount && frontendCalculatedAmount !== finalAmount) {
-        console.log(`[${new Date().toISOString()}] - Frontend amount (${frontendCalculatedAmount}) differs from server amount (${finalAmount}). Using server amount.`);
-      }
     } else if (isWebinarPayment) {
-      console.log(`[${new Date().toISOString()}] - Processing webinar payment`);
-
       if (!metadata?.webinarId || !metadata?.registrationId) {
-        console.error(`[${new Date().toISOString()}] - Missing webinar metadata:`, metadata);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Missing required webinar information',
-            details: 'webinarId and registrationId are required'
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          },
-        );
+        return new Response(JSON.stringify({ error: 'Missing required webinar information' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-
-      // Fetch authoritative webinar price from DB
-      const { data: webinarRow, error: webinarErr } = await supabase
-        .from('webinars')
-        .select('discounted_price, title')
-        .eq('id', metadata.webinarId)
-        .single();
-
+      const { data: webinarRow, error: webinarErr } = await supabase.from('webinars').select('discounted_price, title').eq('id', metadata.webinarId).single();
       if (webinarErr || !webinarRow) {
-        console.error(`[${new Date().toISOString()}] - Unable to fetch webinar for pricing:`, webinarErr);
-        return new Response(
-          JSON.stringify({ error: 'Unable to fetch webinar pricing' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-        );
+        return new Response(JSON.stringify({ error: 'Unable to fetch webinar pricing' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-
       originalPrice = Number(webinarRow.discounted_price || 0);
       if (!originalPrice || originalPrice <= 0) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid webinar price configured' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-        );
+        return new Response(JSON.stringify({ error: 'Invalid webinar price configured' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-
       finalAmount = originalPrice;
-
-      // Apply webinar coupon "primo" for 99% OFF
       const normalizedCoupon = (couponCode || '').toLowerCase().trim();
       if (normalizedCoupon === 'primo') {
         const reduced = Math.max(100, Math.floor(originalPrice * 0.01));
@@ -337,84 +339,21 @@ serve(async (req) => {
         finalAmount = reduced;
         appliedCoupon = 'primo';
       }
-
-      // If client sent an amount that differs, prefer server amount; do not hard-fail
-      if (frontendCalculatedAmount && frontendCalculatedAmount !== finalAmount) {
-        console.log(`[${new Date().toISOString()}] - Frontend amount (${frontendCalculatedAmount}) differs from server computed amount (${finalAmount}). Proceeding with server amount.`);
-      }
-
       if (!finalAmount || finalAmount <= 0) {
-        return new Response(
-          JSON.stringify({ error: 'Calculated payable amount is invalid' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-        );
+        return new Response(JSON.stringify({ error: 'Calculated payable amount is invalid' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
     }
 
     let plan: PlanConfig;
     if (isSessionBooking) {
-      plan = {
-        id: 'session_booking',
-        name: metadata?.serviceTitle || 'Session Booking',
-        price: originalPrice / 100,
-        mrp: originalPrice / 100,
-        discountPercentage: 0,
-        duration: 'One-time Purchase',
-        optimizations: 0,
-        scoreChecks: 0,
-        linkedinMessages: 0,
-        guidedBuilds: 0,
-        durationInHours: 0,
-        tag: '',
-        tagColor: '',
-        gradient: '',
-        icon: '',
-        features: [],
-      };
+      plan = { id: 'session_booking', name: metadata?.serviceTitle || 'Session Booking', price: originalPrice / 100, mrp: originalPrice / 100, discountPercentage: 0, duration: 'One-time Purchase', optimizations: 0, scoreChecks: 0, linkedinMessages: 0, guidedBuilds: 0, sessions: 0, durationInHours: 0, tag: '', tagColor: '', gradient: '', icon: '', features: [] };
     } else if (isWebinarPayment) {
-      plan = {
-        id: 'webinar_payment',
-        name: metadata?.webinarTitle || 'Webinar Registration',
-        price: originalPrice / 100,
-        mrp: originalPrice / 100,
-        discountPercentage: 0,
-        duration: 'One-time Purchase',
-        optimizations: 0,
-        scoreChecks: 0,
-        linkedinMessages: 0,
-        guidedBuilds: 0,
-        durationInHours: 0,
-        tag: '',
-        tagColor: '',
-        gradient: '',
-        icon: '',
-        features: [],
-      };
+      plan = { id: 'webinar_payment', name: metadata?.webinarTitle || 'Webinar Registration', price: originalPrice / 100, mrp: originalPrice / 100, discountPercentage: 0, duration: 'One-time Purchase', optimizations: 0, scoreChecks: 0, linkedinMessages: 0, guidedBuilds: 0, sessions: 0, durationInHours: 0, tag: '', tagColor: '', gradient: '', icon: '', features: [] };
     } else if (planId === 'addon_only_purchase' || !planId) {
-      plan = {
-        id: 'addon_only_purchase',
-        name: 'Add-on Only Purchase',
-        price: 0,
-        mrp: 0,
-        discountPercentage: 0,
-        duration: 'One-time Purchase',
-        optimizations: 0,
-        scoreChecks: 0,
-        linkedinMessages: 0,
-        guidedBuilds: 0,
-        durationInHours: 0,
-        tag: '',
-        tagColor: '',
-        gradient: '',
-        icon: '',
-        features: [],
-      };
+      plan = { id: 'addon_only_purchase', name: 'Add-on Only Purchase', price: 0, mrp: 0, discountPercentage: 0, duration: 'One-time Purchase', optimizations: 0, scoreChecks: 0, linkedinMessages: 0, guidedBuilds: 0, sessions: 0, durationInHours: 0, tag: '', tagColor: '', gradient: '', icon: '', features: [] };
     } else {
       const foundPlan = plans.find((p) => p.id === planId);
-      if (!foundPlan) {
-        console.error(`[${new Date().toISOString()}] - Invalid plan ID: ${planId}`);
-        throw new Error('Invalid plan selected');
-      }
+      if (!foundPlan) throw new Error('Invalid plan selected');
       plan = foundPlan;
     }
 
@@ -435,81 +374,21 @@ serve(async (req) => {
         .ilike('coupon_code', normalizedCoupon)
         .in('status', ['success', 'pending']);
 
-      if (userCouponUsageError) {
-        console.error(`[${new Date().toISOString()}] - Error checking user coupon usage:`, userCouponUsageError);
-        throw new Error('Failed to verify coupon usage. Please try again.');
-      }
-
+      if (userCouponUsageError) throw new Error('Failed to verify coupon usage.');
       if (userCouponUsageCount && userCouponUsageCount > 0) {
-        console.log(`[${new Date().toISOString()}] - Coupon "${normalizedCoupon}" already used by user ${user.id}.`);
-        return new Response(
-          JSON.stringify({ error: `Coupon "${normalizedCoupon}" has already been used by this account.` }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          },
-        );
+        return new Response(JSON.stringify({ error: `Coupon "${normalizedCoupon}" has already been used by this account.` }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
 
-      if (normalizedCoupon === 'fullsupport' && planId === 'career_pro_max') {
+      if (normalizedCoupon === 'fullsupport' && planId === 'career_pro') {
         finalAmount = 0;
         discountAmount = plan.price * 100;
         appliedCoupon = 'fullsupport';
-      }
-      else if (normalizedCoupon === 'first100' && planId === 'lite_check') {
-        finalAmount = 0;
-        discountAmount = plan.price * 100;
-        appliedCoupon = 'first100';
-      }
-      else if (normalizedCoupon === 'first500' && planId === 'lite_check') {
-        const { count, error: countError } = await supabase
-          .from('payment_transactions')
-          .select('id', { count: 'exact' })
-          .eq('coupon_code', 'first500')
-          .in('status', ['success', 'pending']);
-
-        if (countError) {
-          console.error(`[${new Date().toISOString()}] - Error counting first500 coupon usage:`, countError);
-          throw new Error('Failed to verify coupon usage. Please try again.');
-        }
-
-        if (count && count >= 500) {
-          throw new Error('Coupon "first500" has reached its usage limit.');
-        }
-
-        discountAmount = Math.floor(plan.price * 100 * 0.98);
-        finalAmount = (plan.price * 100) - discountAmount;
-        appliedCoupon = 'first500';
-      }
-      else if (normalizedCoupon === 'worthyone' && planId === 'career_pro_max') {
-        const discountAmount = Math.floor(plan.price * 100 * 0.5);
-        finalAmount = (plan.price * 100) - discountAmount;
-        appliedCoupon = 'worthyone';
-      }
-      else if (normalizedCoupon === 'vnkr50%' && planId === 'career_pro_max') {
-        discountAmount = Math.floor(originalPrice * 0.5);
-        finalAmount = originalPrice - discountAmount;
-        appliedCoupon = 'vnkr50%';
-      }
-      else if (normalizedCoupon === 'vnk50' && planId === 'career_pro_max') {
-        discountAmount = Math.floor(originalPrice * 0.5);
-        finalAmount = originalPrice - discountAmount;
-        appliedCoupon = 'vnk50';
-      }
-      else if (normalizedCoupon === 'diwali') {
+      } else if (normalizedCoupon === 'diwali') {
         discountAmount = Math.floor(originalPrice * 0.9);
         finalAmount = originalPrice - discountAmount;
         appliedCoupon = 'diwali';
-        console.log(`[${new Date().toISOString()}] - DIWALI coupon applied to plan ${planId}. Original: ${originalPrice}, Discount: ${discountAmount}, Final: ${finalAmount}`);
-      }
-      else {
-        return new Response(
-          JSON.stringify({ error: 'Invalid coupon code or not applicable to selected plan.' }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          },
-        );
+      } else {
+        return new Response(JSON.stringify({ error: 'Invalid coupon code or not applicable to selected plan.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
     }
 
@@ -520,21 +399,13 @@ serve(async (req) => {
         .eq("user_id", user.id)
         .eq("status", "completed");
 
-      if (walletBalanceError) {
-        console.error(`[${new Date().toISOString()}] - Error checking wallet balance:`, walletBalanceError);
-        throw new Error('Failed to verify wallet balance.');
-      }
+      if (walletBalanceError) throw new Error('Failed to verify wallet balance.');
 
       const currentBalance = (walletRows || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
       const walletDeductionInRupees = walletDeduction / 100;
       if (currentBalance < walletDeductionInRupees) {
-        console.error(`[${new Date().toISOString()}] - Insufficient wallet balance. Current: ${currentBalance}, Requested: ${walletDeductionInRupees}`);
-        return new Response(
-          JSON.stringify({ error: 'Insufficient wallet balance.' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
-        );
+        return new Response(JSON.stringify({ error: 'Insufficient wallet balance.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-
       finalAmount = Math.max(0, finalAmount - walletDeduction);
     }
 
@@ -544,28 +415,10 @@ serve(async (req) => {
 
     if (!isWebinarPayment && !isSessionBooking) {
       if (finalAmount !== frontendCalculatedAmount) {
-        console.error(`[${new Date().toISOString()}] - Price mismatch detected! Backend calculated: ${finalAmount}, Frontend sent: ${frontendCalculatedAmount}`);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Price mismatch detected. Please try again.',
-            debug: {
-              backendCalculated: finalAmount,
-              frontendSent: frontendCalculatedAmount,
-              difference: Math.abs(finalAmount - frontendCalculatedAmount)
-            }
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-          },
-        );
+        return new Response(JSON.stringify({ error: 'Price mismatch detected. Please try again.', debug: { backendCalculated: finalAmount, frontendSent: frontendCalculatedAmount } }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
     }
 
-    // Create pending payment_transactions record
-    console.log(`[${new Date().toISOString()}] - Creating pending payment_transactions record.`);
-
-    // Build base insert payload
     const getPurchaseType = () => {
       if (isSessionBooking) return 'session_booking';
       if (isWebinarPayment) return 'webinar';
@@ -589,29 +442,14 @@ serve(async (req) => {
     };
 
     if (isWebinarPayment && metadata) {
-      baseInsert.metadata = {
-        type: 'webinar',
-        webinarId: metadata.webinarId,
-        registrationId: metadata.registrationId,
-        webinarTitle: metadata.webinarTitle,
-      };
+      baseInsert.metadata = { type: 'webinar', webinarId: metadata.webinarId, registrationId: metadata.registrationId, webinarTitle: metadata.webinarTitle };
     }
-
     if (isSessionBooking && metadata) {
-      baseInsert.metadata = {
-        type: 'session_booking',
-        serviceId: metadata.serviceId,
-        serviceTitle: metadata.serviceTitle,
-      };
+      baseInsert.metadata = { type: 'session_booking', serviceId: metadata.serviceId, serviceTitle: metadata.serviceTitle };
     }
 
-    // Attempt insert, and on schema errors (missing columns), fall back by removing fields
     const tryInsert = async (payload: any): Promise<{ id: string }> => {
-      const { data, error } = await supabase
-        .from('payment_transactions')
-        .insert(payload)
-        .select('id')
-        .single();
+      const { data, error } = await supabase.from('payment_transactions').insert(payload).select('id').single();
       if (error) throw error;
       return data as { id: string };
     };
@@ -621,26 +459,17 @@ serve(async (req) => {
       const t = await tryInsert(baseInsert);
       transactionId = t.id;
     } catch (e: any) {
-      const msg = String(e?.message || '');
-      console.warn(`[${new Date().toISOString()}] - Initial transaction insert failed: ${msg}`);
-      // Create a shallow copy and remove fields known to be optional in older schemas
       const fallbackInsert = { ...baseInsert };
       delete fallbackInsert.metadata;
-      // Some databases might not have purchase_type
       delete fallbackInsert.purchase_type;
       try {
         const t2 = await tryInsert(fallbackInsert);
         transactionId = t2.id;
       } catch (e2: any) {
-        console.error(`[${new Date().toISOString()}] - Fallback transaction insert failed:`, e2);
         throw new Error(`Failed to initiate payment transaction: ${e2?.message || 'unknown error'}`);
       }
     }
-    
-    console.log(`[${new Date().toISOString()}] - Pending transaction created with ID: ${transactionId}`);
 
-    // Create Razorpay order
-    // Choose Razorpay creds based on mode (test/live)
     const envTestMode = (Deno.env.get('RAZORPAY_TEST_MODE') || '').toLowerCase() === 'true';
     const isTestMode = Boolean(testMode) || envTestMode;
 
@@ -651,10 +480,7 @@ serve(async (req) => {
       ? (Deno.env.get('RAZORPAY_TEST_KEY_SECRET') || Deno.env.get('RAZORPAY_KEY_SECRET'))
       : Deno.env.get('RAZORPAY_KEY_SECRET');
 
-    if (!razorpayKeyId || !razorpayKeySecret) {
-      console.error(`[${new Date().toISOString()}] - Razorpay credentials not configured`);
-      throw new Error('Razorpay credentials not configured');
-    }
+    if (!razorpayKeyId || !razorpayKeySecret) throw new Error('Razorpay credentials not configured');
 
     const orderData = {
       amount: finalAmount,
@@ -670,74 +496,43 @@ serve(async (req) => {
         addOnsTotal: addOnsTotal || 0,
         transactionId: transactionId,
         selectedAddOns: JSON.stringify(selectedAddOns || {}),
-        paymentType: isWebinarPayment ? 'webinar' : 'subscription',
+        paymentType: isWebinarPayment ? 'webinar' : (isSessionBooking ? 'session_booking' : 'subscription'),
         webinarId: metadata?.webinarId || '',
         registrationId: metadata?.registrationId || '',
         webinarTitle: metadata?.webinarTitle || '',
+        serviceId: metadata?.serviceId || '',
+        serviceTitle: metadata?.serviceTitle || '',
         mode: isTestMode ? 'test' : 'live',
       },
     };
 
-    console.log(`[${new Date().toISOString()}] - Creating Razorpay order:`, orderData);
-
     const auth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
-
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
-      headers: {
-        Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData),
     });
 
-    console.log(`[${new Date().toISOString()}] - Razorpay API response status: ${response.status}`);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[${new Date().toISOString()}] - Razorpay API error:`, errorText);
       await supabase.from('payment_transactions').update({ status: 'failed' }).eq('id', transactionId);
       throw new Error(`Failed to create payment order with Razorpay: ${errorText}`);
     }
 
     const order = await response.json();
-    console.log(`[${new Date().toISOString()}] - Razorpay order created successfully: ${order.id}`);
 
-    // Try to persist the order_id to the pending transaction (best-effort)
     try {
-      await supabase
-        .from('payment_transactions')
-        .update({ order_id: order.id })
-        .eq('id', transactionId as string);
-    } catch (e) {
-      console.warn(`[${new Date().toISOString()}] - Failed to update order_id on payment_transactions:`, e);
-    }
+      await supabase.from('payment_transactions').update({ order_id: order.id }).eq('id', transactionId as string);
+    } catch (_e) {}
 
     return new Response(
-      JSON.stringify({
-        orderId: order.id,
-        amount: finalAmount,
-        keyId: razorpayKeyId,
-        currency: 'INR',
-        transactionId: transactionId,
-        mode: isTestMode ? 'test' : 'live',
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
+      JSON.stringify({ orderId: order.id, amount: finalAmount, keyId: razorpayKeyId, currency: 'INR', transactionId: transactionId, mode: isTestMode ? 'test' : 'live' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 },
     );
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] - Error creating order:`, error);
+  } catch (error: any) {
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        timestamp: new Date().toISOString()
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      },
+      JSON.stringify({ error: error.message, timestamp: new Date().toISOString() }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
     );
   }
 });

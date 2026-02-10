@@ -284,11 +284,12 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
               <button
                 key={cat.key}
                 onClick={() => setActiveCategory(cat.key)}
-                className={`relative flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border backdrop-blur-xl transition-all duration-300 whitespace-nowrap ${
+                className={`relative flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 whitespace-nowrap ${
                   activeCategory === cat.key
-                    ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
-                    : 'border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]'
+                    ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-300 shadow-[0_0_24px_rgba(16,185,129,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]'
+                    : 'border-white/[0.15] bg-white/[0.07] text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
                 }`}
+                style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
               >
                 {cat.icon}
                 <span className="text-sm font-medium">{cat.label}</span>
