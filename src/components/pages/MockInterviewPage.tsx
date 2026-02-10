@@ -47,6 +47,7 @@ export const MockInterviewPage: React.FC<MockInterviewPageProps> = ({
   useSEO({
     title: 'AI Mock Interview - Practice with AI Interviewer',
     description: 'Practice interviews with our AI-powered mock interview system. Get real-time feedback, scoring, and improvement suggestions for technical and behavioral interviews.',
+    keywords: 'AI mock interview, mock interview online, technical interview practice, behavioral interview practice, interview preparation tool, AI interview feedback, coding interview practice, HR interview practice, interview scoring, interview improvement, PrimoBoost AI',
     canonical: '/mock-interview',
   });
 

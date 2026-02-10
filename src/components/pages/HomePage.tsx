@@ -36,6 +36,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     title: 'PrimoBoost AI | Resume Optimizer, ATS Scoring, Expert Sessions & Job Updates',
     description:
       'Transform your career with AI-powered resume optimization, 16-parameter ATS scoring, 1:1 expert sessions, professional referrals, and curated job updates. Trusted by 50,000+ professionals.',
+    keywords: 'ATS resume, ATS friendly resume, ATS resume builder, ATS resume checker, ATS resume score, ATS optimized resume, ATS resume format, ATS resume optimization tool, ATS resume AI tool, ATS resume scoring system, JD based resume, job description based resume, resume from job description, JD resume builder, JD resume optimization, JD resume matching, resume tailored to job description, resume keyword optimizer, resume keyword checker, resume keyword analysis, resume optimization tool, resume optimization AI, AI resume builder, resume score checker, professional resume builder, career optimization, PrimoBoost AI',
     canonical: '/',
     ogType: 'website',
   });

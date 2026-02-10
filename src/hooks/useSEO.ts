@@ -6,6 +6,7 @@ const BASE_URL = 'https://primoboost.ai';
 interface SEOOptions {
   title?: string;
   description?: string;
+  keywords?: string;
   canonical?: string;
   ogTitle?: string;
   ogDescription?: string;
@@ -20,6 +21,7 @@ export function useSEO(options: SEOOptions) {
     const {
       title,
       description,
+      keywords,
       canonical,
       ogTitle,
       ogDescription,
@@ -35,6 +37,10 @@ export function useSEO(options: SEOOptions) {
 
     if (description) {
       updateMeta('description', description);
+    }
+
+    if (keywords) {
+      updateMeta('keywords', keywords);
     }
 
     if (canonical) {
@@ -79,7 +85,7 @@ export function useSEO(options: SEOOptions) {
       document.title = `${BASE_TITLE} - AI-Powered Resume Optimizer | ATS-Friendly Resume Builder`;
       updateMeta('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
     };
-  }, [options.title, options.description, options.canonical, options.ogTitle, options.ogDescription, options.ogType, options.ogImage, options.twitterCard, options.noIndex]);
+  }, [options.title, options.description, options.keywords, options.canonical, options.ogTitle, options.ogDescription, options.ogType, options.ogImage, options.twitterCard, options.noIndex]);
 }
 
 function updateMeta(name: string, content: string) {

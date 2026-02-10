@@ -40,6 +40,7 @@ export const CareersPage: React.FC<CareersPageProps> = ({ isAuthenticated, onSho
   useSEO({
     title: 'Careers - Company-Wise Job Openings & Practice',
     description: 'Explore company-wise career opportunities and practice for specific company interviews. Browse jobs from top companies with domain-specific preparation resources.',
+    keywords: 'company wise jobs, Google jobs, TCS jobs, Infosys jobs, Wipro jobs, Amazon jobs, company interview preparation, company specific resume, company career opportunities, top company jobs India, PrimoBoost AI',
     canonical: '/careers',
   });
 

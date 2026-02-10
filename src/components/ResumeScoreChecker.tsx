@@ -65,6 +65,7 @@ import type { Subscription } from '../types/payment';
 import { paymentService } from '../services/paymentService';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSEO } from '../hooks/useSEO';
 
 interface ResumeScoreCheckerProps {
   onNavigateBack: () => void;
@@ -98,7 +99,14 @@ export const ResumeScoreChecker: React.FC<ResumeScoreCheckerProps> = ({
     throw new Error('onShowAlert prop is missing or invalid in ResumeScoreChecker');
   }
 
-  const { user } = useAuth(); // Get the user object from AuthContext
+  const { user } = useAuth();
+
+  useSEO({
+    title: 'ATS Resume Score Checker - Free Resume Analysis & ATS Compatibility Test',
+    description: 'Check your resume ATS score instantly with our AI-powered 16-parameter ATS resume checker. Get detailed keyword analysis, formatting validation, and actionable improvement suggestions to pass ATS screening.',
+    keywords: 'ATS resume score, ATS resume checker, ATS resume score checker, ATS resume analysis, ATS resume scan, ATS resume test, ATS resume compatibility, ATS resume screening, ATS resume parsing test, ATS resume keyword checker, ATS resume keyword analysis, ATS resume keyword optimization, ATS resume scoring system, ATS resume AI, resume score checker, resume keyword score, resume keyword heatmap, resume keyword report, resume ATS compatibility test, resume optimization score, ATS resume India, ATS resume fresher, ATS resume experienced, PrimoBoost AI',
+    canonical: '/score-checker',
+  });
   const location = useLocation();
   const [extractionResult, setExtractionResult] = useState<ExtractionResult>({ text: '', extraction_mode: 'TEXT', trimmed: false });
   const [parsedResumeData, setParsedResumeData] = useState<ParsedResume | null>(null);

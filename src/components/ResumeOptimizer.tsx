@@ -27,6 +27,7 @@ import { ResumeData, UserType, MatchScore, DetailedScore, ExtractionResult, Scor
 import { ExportOptions, defaultExportOptions } from '../types/export';
 import { exportToPDF, exportToWord } from '../utils/exportUtils';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 import { ExportButtons } from './ExportButtons';
 import { ResumePreviewControls } from './ResumePreviewControls';
 import { FullScreenPreviewModal } from './FullScreenPreviewModal';
@@ -95,6 +96,13 @@ const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   const { isChristmasMode, colors } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useSEO({
+    title: 'JD-Based Resume Optimizer - Tailor Resume to Job Description',
+    description: 'Optimize your resume for any job description with AI-powered JD-based resume optimization. Get ATS-friendly, keyword-matched resumes tailored to specific roles. Increase your interview callback rate.',
+    keywords: 'JD based resume, job description based resume, resume from job description, JD resume builder, JD resume optimization, JD resume keywords, JD resume matching, JD resume AI tool, resume tailored to job description, resume optimized for JD, resume JD keyword mapping, resume JD alignment tool, JD resume score, JD resume rewrite, JD resume customization, ATS resume optimization tool, ATS resume keyword match, resume keyword optimizer, resume optimization AI, resume optimization tool, resume optimization for software engineer, resume optimization for fresher, resume optimization for experienced, PrimoBoost AI',
+    canonical: '/optimizer',
+  });
 
   const jobContext = location.state as { jobId?: string; jobDescription?: string; roleTitle?: string; companyName?: string; fromJobApplication?: boolean } | null;
   const jobIdFromContext = jobContext?.jobId;

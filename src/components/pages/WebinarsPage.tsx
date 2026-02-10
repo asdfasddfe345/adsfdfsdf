@@ -28,6 +28,7 @@ export const WebinarsPage: React.FC<WebinarsPageProps> = ({ onShowAuth }) => {
   useSEO({
     title: 'Webinars - Career Growth & Interview Preparation',
     description: 'Join live webinars on resume building, interview preparation, career growth strategies, and more. Learn from industry experts at PrimoBoost AI.',
+    keywords: 'career webinars, resume building webinar, interview preparation webinar, career growth strategies, job search webinar, ATS resume webinar, resume optimization webinar, PrimoBoost AI webinars',
     canonical: '/webinars',
   });
 

@@ -33,6 +33,7 @@ export const EnhancedBlogPage: React.FC<EnhancedBlogPageProps> = ({
   useSEO({
     title: 'Blog - Career Tips, Resume Advice & Interview Guides',
     description: 'Read expert articles on resume building, ATS optimization, interview preparation, and career growth. Stay updated with the latest job market insights.',
+    keywords: 'resume tips, ATS resume tips, resume building guide, interview preparation tips, career growth advice, job search tips, resume optimization tips, ATS optimization guide, resume keyword tips, resume formatting guide, job market insights India, PrimoBoost AI blog',
     canonical: '/blog',
   });
 

@@ -54,6 +54,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
   useSEO({
     title: 'Latest Jobs - Fresher & Experienced Openings at Top Companies',
     description: 'Browse latest job openings at Google, TCS, Infosys, Wipro, Amazon & more top companies in India. Find fresher jobs, experienced roles, remote positions. Apply directly or use AI-powered auto-apply on PrimoBoost AI.',
+    keywords: 'latest jobs India, fresher jobs, experienced jobs, remote jobs India, IT jobs India, software engineer jobs, data analyst jobs, full stack developer jobs, frontend developer jobs, backend developer jobs, DevOps jobs, cloud engineer jobs, QA tester jobs, business analyst jobs, product manager jobs, fresher IT jobs, entry level IT jobs, job portals India, ATS resume job matching, AI job matching, job search India, PrimoBoost AI',
     canonical: '/jobs',
     ogType: 'website',
     twitterCard: 'summary_large_image',
