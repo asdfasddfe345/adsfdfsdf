@@ -278,23 +278,24 @@ export const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({
         </div>
 
         {/* Category Selector - Horizontal scroll on mobile, grid on desktop */}
-        <div className="lg:hidden mb-6 -mx-4 px-4">
-          <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+        <div className="lg:hidden mb-6 -mx-4">
+          <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
             {CATEGORY_CONFIG.map((cat) => (
               <button
                 key={cat.key}
                 onClick={() => setActiveCategory(cat.key)}
-                className={`relative flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 whitespace-nowrap ${
+                className={`relative flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[13px] font-medium ${
                   activeCategory === cat.key
                     ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-300 shadow-[0_0_24px_rgba(16,185,129,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]'
-                    : 'border-white/[0.15] bg-white/[0.07] text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]'
+                    : 'border-slate-500/30 bg-slate-700/40 text-slate-300'
                 }`}
                 style={{ backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
               >
                 {cat.icon}
-                <span className="text-sm font-medium">{cat.label}</span>
+                {cat.label}
               </button>
             ))}
+            <div className="flex-shrink-0 w-4" />
           </div>
         </div>
 
