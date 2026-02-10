@@ -360,10 +360,14 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
     try {
       console.log('JobsService: Fetching all jobs for AI matching...');
 
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       const { data: jobs, error } = await supabase
         .from('job_listings')
         .select('*')
         .eq('is_active', true)
+        .gte('created_at', sevenDaysAgo.toISOString())
         .order('posted_date', { ascending: false })
         .limit(1000);
 
