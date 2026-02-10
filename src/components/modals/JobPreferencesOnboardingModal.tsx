@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -11,25 +11,22 @@ import {
   Loader2,
   FileText,
   AlertCircle,
+  Search,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { resumeParsingService } from '../../services/resumeParsingService';
 import { userPreferencesService } from '../../services/userPreferencesService';
 import { aiJobMatchingService } from '../../services/aiJobMatchingService';
 import { jobsService } from '../../services/jobsService';
 import { useAuth } from '../../contexts/AuthContext';
+import { TECH_CATEGORIES, ALL_TECH_KEYWORDS } from '../../data/techKeywords';
 
 interface JobPreferencesOnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void;
 }
-
-const TECH_OPTIONS = [
-  'React', 'Angular', 'Vue', 'JavaScript', 'TypeScript', 'Node.js',
-  'Python', 'Java', 'C++', 'Go', 'Rust', 'PHP',
-  'Machine Learning', 'AI', 'Data Science', 'Cloud Computing',
-  'DevOps', 'Mobile Development', 'UI/UX Design', 'Cybersecurity',
-];
 
 const WORK_MODES = [
   { value: 'remote', label: 'Remote', icon: '🏠' },
@@ -45,7 +42,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false); // NEW: Track full loading screen state
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -55,7 +52,21 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
   const [techInterests, setTechInterests] = useState<string[]>([]);
   const [preferredModes, setPreferredModes] = useState<string[]>(['remote', 'hybrid']);
 
+  const [techSearch, setTechSearch] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+
   const totalSteps = 5;
+
+  const filteredCategories = useMemo(() => {
+    if (!techSearch.trim()) return TECH_CATEGORIES;
+    const q = techSearch.toLowerCase();
+    return TECH_CATEGORIES
+      .map(cat => ({
+        ...cat,
+        keywords: cat.keywords.filter(k => k.toLowerCase().includes(q)),
+      }))
+      .filter(cat => cat.keywords.length > 0);
+  }, [techSearch]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,7 +92,15 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
 
       setResumeFile(file);
       setResumeText(parsed.text);
-      setTechInterests(parsed.skills.slice(0, 10));
+
+      const extractedSkills = parsed.skills.slice(0, 15);
+      const matched = extractedSkills.filter(s =>
+        ALL_TECH_KEYWORDS.some(k => k.toLowerCase() === s.toLowerCase())
+      );
+      const unmatched = extractedSkills.filter(s =>
+        !ALL_TECH_KEYWORDS.some(k => k.toLowerCase() === s.toLowerCase())
+      );
+      setTechInterests([...matched, ...unmatched]);
     } catch (err: any) {
       setError(err.message || 'Failed to process resume');
     } finally {
@@ -109,16 +128,30 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
     );
   };
 
+  const toggleCategory = (catName: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
+    );
+  };
+
   const toggleWorkMode = (mode: string) => {
     setPreferredModes((prev) =>
       prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]
     );
   };
 
+  const handleAddCustomKeyword = () => {
+    const trimmed = techSearch.trim();
+    if (trimmed && !techInterests.includes(trimmed)) {
+      setTechInterests(prev => [...prev, trimmed]);
+      setTechSearch('');
+    }
+  };
+
   const handleComplete = async () => {
     if (!user) return;
 
-    setIsProcessing(true); // NEW: Show full loading screen
+    setIsProcessing(true);
     setLoading(true);
     setError('');
 
@@ -156,7 +189,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
       onComplete();
     } catch (err: any) {
       setError(err.message || 'Failed to save preferences');
-      setIsProcessing(false); // NEW: Hide loading screen on error
+      setIsProcessing(false);
     } finally {
       setLoading(false);
     }
@@ -165,26 +198,21 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
   if (!isOpen) return null;
 
   const renderStep = () => {
-    // NEW: Show loading screen when processing
     if (isProcessing) {
       return (
         <div className="space-y-6 py-16">
           <div className="text-center">
             <div className="relative w-28 h-28 mx-auto mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-pulse"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full animate-pulse" />
               <div className="absolute inset-2 bg-slate-900 rounded-full flex items-center justify-center">
                 <Loader2 className="w-14 h-14 text-emerald-400 animate-spin" />
               </div>
             </div>
-            <h3 className="text-3xl font-bold text-slate-100 mb-4">
-              Finding Jobs...
-            </h3>
+            <h3 className="text-3xl font-bold text-slate-100 mb-4">Finding Jobs...</h3>
             <p className="text-lg text-slate-300 mb-2">
               Analyzing your preferences and matching with opportunities
             </p>
-            <p className="text-sm text-slate-500">
-              This may take a few moments
-            </p>
+            <p className="text-sm text-slate-500">This may take a few moments</p>
           </div>
         </div>
       );
@@ -198,9 +226,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
               <div className="bg-blue-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
                 <Upload className="w-8 h-8 text-blue-400" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-100 mb-2">
-                Upload Your Resume
-              </h3>
+              <h3 className="text-2xl font-bold text-slate-100 mb-2">Upload Your Resume</h3>
               <p className="text-slate-400">
                 We'll analyze your skills and experience to recommend the best jobs
               </p>
@@ -215,19 +241,12 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
                 onChange={handleFileUpload}
                 disabled={loading}
               />
-              <label
-                htmlFor="resume-upload"
-                className="cursor-pointer flex flex-col items-center"
-              >
+              <label htmlFor="resume-upload" className="cursor-pointer flex flex-col items-center">
                 {resumeFile ? (
                   <>
                     <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-3" />
-                    <p className="text-lg font-semibold text-slate-100">
-                      {resumeFile.name}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-2">
-                      Click to change file
-                    </p>
+                    <p className="text-lg font-semibold text-slate-100">{resumeFile.name}</p>
+                    <p className="text-sm text-slate-400 mt-2">Click to change file</p>
                   </>
                 ) : (
                   <>
@@ -235,9 +254,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
                     <p className="text-lg font-semibold text-slate-100">
                       Click to upload or drag and drop
                     </p>
-                    <p className="text-sm text-slate-400 mt-2">
-                      PDF, DOCX, or TXT (max 5MB)
-                    </p>
+                    <p className="text-sm text-slate-400 mt-2">PDF, DOCX, or TXT (max 5MB)</p>
                   </>
                 )}
               </label>
@@ -256,15 +273,11 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="bg-purple-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
-                <Calendar className="w-8 h-8 text-purple-400" />
+              <div className="bg-cyan-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-cyan-500/30">
+                <Calendar className="w-8 h-8 text-cyan-400" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-100 mb-2">
-                When did you graduate?
-              </h3>
-              <p className="text-slate-400">
-                We'll match you with jobs for your batch
-              </p>
+              <h3 className="text-2xl font-bold text-slate-100 mb-2">When did you graduate?</h3>
+              <p className="text-slate-400">We'll match you with jobs for your batch</p>
             </div>
 
             <div className="max-w-md mx-auto">
@@ -293,9 +306,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
               <h3 className="text-2xl font-bold text-slate-100 mb-2">
                 What role are you looking for?
               </h3>
-              <p className="text-slate-400">
-                Choose the type of opportunity you're interested in
-              </p>
+              <p className="text-slate-400">Choose the type of opportunity you're interested in</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
@@ -314,9 +325,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
                   }`}
                 >
                   <div className="text-4xl mb-2">{option.icon}</div>
-                  <div className="text-lg font-semibold text-slate-100">
-                    {option.label}
-                  </div>
+                  <div className="text-lg font-semibold text-slate-100">{option.label}</div>
                 </button>
               ))}
             </div>
@@ -325,7 +334,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
 
       case 4:
         return (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div className="text-center">
               <div className="bg-orange-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-orange-500/30">
                 <Code className="w-8 h-8 text-orange-400" />
@@ -334,24 +343,105 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
                 Which technologies interest you?
               </h3>
               <p className="text-slate-400">
-                Select all that apply (we pre-selected from your resume)
+                Select from 200+ technologies or type your own
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3 max-w-4xl mx-auto justify-center">
-              {TECH_OPTIONS.map((tech) => (
+            {techInterests.length > 0 && (
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3">
+                <p className="text-xs text-emerald-400 font-medium mb-2">
+                  Selected ({techInterests.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {techInterests.map((tech) => (
+                    <button
+                      key={tech}
+                      onClick={() => toggleTechInterest(tech)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+                    >
+                      {tech}
+                      <X className="w-3 h-3" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                value={techSearch}
+                onChange={(e) => setTechSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddCustomKeyword();
+                  }
+                }}
+                placeholder="Search technologies or type custom keyword..."
+                className="w-full pl-10 pr-20 py-3 rounded-xl border border-slate-700 bg-slate-800/50 text-slate-100 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder:text-slate-500"
+              />
+              {techSearch.trim() && !ALL_TECH_KEYWORDS.some(k => k.toLowerCase() === techSearch.trim().toLowerCase()) && (
                 <button
-                  key={tech}
-                  onClick={() => toggleTechInterest(tech)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    techInterests.includes(tech)
-                      ? 'bg-emerald-500 text-white'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
-                  }`}
+                  onClick={handleAddCustomKeyword}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/20 transition-colors"
                 >
-                  {tech}
+                  + Add
                 </button>
-              ))}
+              )}
+            </div>
+
+            <div className="max-h-[280px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              {filteredCategories.map((cat) => {
+                const isExpanded = expandedCategories.includes(cat.name) || techSearch.trim().length > 0;
+                const selectedInCat = cat.keywords.filter(k => techInterests.includes(k)).length;
+                return (
+                  <div key={cat.name} className="border border-slate-700/50 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory(cat.name)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/40 hover:bg-slate-800/60 transition-colors text-left"
+                    >
+                      <span className="text-sm font-medium text-slate-200">
+                        {cat.name}
+                        {selectedInCat > 0 && (
+                          <span className="ml-2 text-xs text-emerald-400">
+                            ({selectedInCat} selected)
+                          </span>
+                        )}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+                    {isExpanded && (
+                      <div className="px-4 py-3 flex flex-wrap gap-2">
+                        {cat.keywords.map((tech) => (
+                          <button
+                            key={tech}
+                            onClick={() => toggleTechInterest(tech)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              techInterests.includes(tech)
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                            }`}
+                          >
+                            {tech}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {filteredCategories.length === 0 && techSearch.trim() && (
+                <div className="text-center py-6 text-slate-400">
+                  <p className="text-sm">No matching technologies found.</p>
+                  <p className="text-xs mt-1">Press Enter to add "{techSearch.trim()}" as a custom keyword.</p>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -363,12 +453,8 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
               <div className="bg-teal-500/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-teal-500/30">
                 <MapPin className="w-8 h-8 text-teal-400" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-100 mb-2">
-                Preferred work mode?
-              </h3>
-              <p className="text-slate-400">
-                Choose your ideal work environment
-              </p>
+              <h3 className="text-2xl font-bold text-slate-100 mb-2">Preferred work mode?</h3>
+              <p className="text-slate-400">Choose your ideal work environment</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
@@ -383,9 +469,7 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
                   }`}
                 >
                   <div className="text-4xl mb-2">{mode.icon}</div>
-                  <div className="text-lg font-semibold text-slate-100">
-                    {mode.label}
-                  </div>
+                  <div className="text-lg font-semibold text-slate-100">{mode.label}</div>
                 </button>
               ))}
             </div>
@@ -405,21 +489,16 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
         exit={{ opacity: 0, scale: 0.95 }}
         className="bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700/50"
       >
-        {/* Header - Hide when processing */}
         {!isProcessing && (
           <div className="p-6 border-b border-slate-700/50 flex items-center justify-between">
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-slate-100">
-                Set Up Your Job Preferences
-              </h2>
+              <h2 className="text-xl font-bold text-slate-100">Set Up Your Job Preferences</h2>
               <div className="flex items-center space-x-2 mt-2">
                 {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
                   <div
                     key={step}
                     className={`h-2 flex-1 rounded-full transition-colors ${
-                      step <= currentStep
-                        ? 'bg-emerald-500'
-                        : 'bg-slate-700'
+                      step <= currentStep ? 'bg-emerald-500' : 'bg-slate-700'
                     }`}
                   />
                 ))}
@@ -457,7 +536,6 @@ export const JobPreferencesOnboardingModal: React.FC<JobPreferencesOnboardingMod
           )}
         </div>
 
-        {/* Footer - Hide when processing */}
         {!isProcessing && (
           <div className="p-6 border-t border-slate-700/50 flex items-center justify-between">
             {currentStep > 1 && (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Bell,
@@ -11,9 +11,11 @@ import {
   GraduationCap,
   Globe,
   Mail,
+  Search,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { userPreferencesService, UserJobPreferences } from '../../services/userPreferencesService';
+import { ALL_TECH_KEYWORDS } from '../../data/techKeywords';
 
 const ROLE_TYPES = [
   { value: 'internship', label: 'Internship' },
@@ -116,11 +118,22 @@ export const ProfilePreferencesTab: React.FC = () => {
   };
 
   const [techInput, setTechInput] = useState('');
-  const addTech = () => {
-    const trimmed = techInput.trim();
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const techSuggestions = useMemo(() => {
+    if (!techInput.trim()) return [];
+    const q = techInput.toLowerCase();
+    return ALL_TECH_KEYWORDS
+      .filter(k => k.toLowerCase().includes(q) && !preferences.tech_interests?.includes(k))
+      .slice(0, 8);
+  }, [techInput, preferences.tech_interests]);
+
+  const addTech = (value?: string) => {
+    const trimmed = (value || techInput).trim();
     if (trimmed && !preferences.tech_interests?.includes(trimmed)) {
       setPreferences(prev => ({ ...prev, tech_interests: [...(prev.tech_interests || []), trimmed] }));
       setTechInput('');
+      setShowSuggestions(false);
     }
   };
 
@@ -191,21 +204,41 @@ export const ProfilePreferencesTab: React.FC = () => {
 
         <div>
           <label className="block text-xs font-medium text-slate-400 mb-1.5">Tech Interests</label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={techInput}
-              onChange={e => setTechInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTech())}
-              placeholder="e.g., React, Python, AWS"
-              className="flex-1 bg-[#05131A] border border-[#0c1d25] text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00E6B8] transition-colors"
-            />
-            <button
-              onClick={addTech}
-              className="px-3 py-2 bg-[rgba(0,230,184,0.15)] text-[#00E6B8] rounded-lg text-sm font-medium hover:bg-[rgba(0,230,184,0.25)] transition-colors"
-            >
-              Add
-            </button>
+          <div className="relative">
+            <div className="flex gap-2 mb-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <input
+                  type="text"
+                  value={techInput}
+                  onChange={e => { setTechInput(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTech())}
+                  placeholder="Search 200+ technologies..."
+                  className="w-full pl-9 pr-3 py-2 bg-[#05131A] border border-[#0c1d25] text-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#00E6B8] transition-colors"
+                />
+                {showSuggestions && techSuggestions.length > 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-[#0a1a24] border border-[#0c1d25] rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    {techSuggestions.map(suggestion => (
+                      <button
+                        key={suggestion}
+                        onMouseDown={(e) => { e.preventDefault(); addTech(suggestion); }}
+                        className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-[rgba(0,230,184,0.1)] hover:text-[#00E6B8] transition-colors"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => addTech()}
+                className="px-3 py-2 bg-[rgba(0,230,184,0.15)] text-[#00E6B8] rounded-lg text-sm font-medium hover:bg-[rgba(0,230,184,0.25)] transition-colors whitespace-nowrap"
+              >
+                Add
+              </button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {(preferences.tech_interests || []).map(tech => (

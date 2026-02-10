@@ -97,7 +97,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
-  const [showingRecommendations, setShowingRecommendations] = useState(false);
+  const [showingRecommendations, setShowingRecommendations] = useState(() => {
+    const stored = localStorage.getItem('primoboost_ai_matches_enabled');
+    return stored === null ? false : stored === 'true';
+  });
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   const pageSize = 12;
@@ -119,15 +122,16 @@ export const JobsPage: React.FC<JobsPageProps> = ({
     checkOnboarding();
   }, [user?.id]);
 
-  const loadAIRecommendations = async () => {
+  const loadAIRecommendations = async (forceEnable = false) => {
     if (!user?.id) return;
 
     setLoadingRecommendations(true);
     try {
       const recommendations = await aiJobMatchingService.getRecommendations(user.id, 40);
       setAiRecommendations(recommendations);
-      if (recommendations.length > 0) {
+      if (forceEnable && recommendations.length > 0) {
         setShowingRecommendations(true);
+        localStorage.setItem('primoboost_ai_matches_enabled', 'true');
       }
     } catch (error) {
       console.error('Error loading AI recommendations:', error);
@@ -157,7 +161,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
         allJobs
       );
 
-      await loadAIRecommendations();
+      await loadAIRecommendations(true);
     } catch (error) {
       console.error('Error refreshing recommendations:', error);
     } finally {
@@ -168,7 +172,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
     setHasCompletedOnboarding(true);
-    loadAIRecommendations();
+    loadAIRecommendations(true);
   };
 
  const loadJobs = useCallback(async (page = 1, newFilters = filters) => {
@@ -392,7 +396,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({
           {hasCompletedOnboarding && (
             <div className="flex items-center justify-center flex-wrap gap-4 mt-6">
               <GradientButton
-                onClick={() => setShowingRecommendations(!showingRecommendations)}
+                onClick={() => {
+                  const next = !showingRecommendations;
+                  setShowingRecommendations(next);
+                  localStorage.setItem('primoboost_ai_matches_enabled', String(next));
+                }}
                 variant={showingRecommendations ? 'primary' : 'secondary'}
                 size="md"
                 icon={Sparkles}
