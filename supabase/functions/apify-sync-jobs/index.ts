@@ -65,20 +65,48 @@ Deno.serve(async (req: Request) => {
     }
 
     if (configs.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'No active configurations found. Please add an Apify configuration first.',
-          results: [],
-        }),
-        {
-          status: 200,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const envToken = Deno.env.get('APIFY_API_TOKEN');
+      if (!envToken) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'No active configurations found and no APIFY_API_TOKEN set. Please add an Apify configuration.',
+            results: [],
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      const defaultConfig = {
+        platform_name: 'LinkedIn',
+        apify_api_token: envToken,
+        actor_id: 'anchor/linkedin-job-scraper',
+        search_config: {
+          searchUrl: 'https://www.linkedin.com/jobs/search/?keywords=software%20engineer&location=India&f_TPR=r604800',
+          maxItems: 50,
+          proxy: { useApifyProxy: true },
+        },
+        is_active: true,
+        sync_frequency_hours: 8,
+      };
+
+      const { data: newConfig, error: insertErr } = await supabase
+        .from('job_fetch_configs')
+        .insert(defaultConfig)
+        .select()
+        .single();
+
+      if (insertErr) {
+        return new Response(
+          JSON.stringify({ success: false, error: `Failed to create default config: ${insertErr.message}`, results: [] }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      configs = [newConfig];
     }
 
     const results = [];
