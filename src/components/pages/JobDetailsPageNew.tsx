@@ -7,7 +7,6 @@ import {
   Users,
   Briefcase,
   Target,
-  ArrowLeft,
   Loader2,
   Building2,
   Globe,
@@ -23,6 +22,12 @@ import {
   ExternalLink,
   Sparkles,
   Share2,
+  ArrowLeft,
+  IndianRupee,
+  GraduationCap,
+  Bookmark,
+  ChevronRight,
+  Zap,
 } from 'lucide-react';
 import { jobsService } from '../../services/jobsService';
 import { JobListing } from '../../types/jobs';
@@ -44,20 +49,26 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [copiedReferralCode, setCopiedReferralCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+
   const eligibleYearTags = useMemo(() => {
     if (!job?.eligible_years) return [];
-
     const raw = job.eligible_years;
     const tokens = Array.isArray(raw)
       ? raw
       : raw.includes(',') || raw.includes('|') || raw.includes('/')
         ? raw.split(/[,|/]/)
         : raw.split(/\s+/);
-
     return tokens
       .map((value) => value.trim())
       .filter((value, index, arr) => value.length > 0 && arr.indexOf(value) === index);
   }, [job?.eligible_years]);
+
+  const postedDaysAgo = useMemo(() => {
+    if (!job?.posted_date) return 0;
+    return Math.floor((Date.now() - new Date(job.posted_date).getTime()) / (1000 * 60 * 60 * 24));
+  }, [job?.posted_date]);
+
+  const postedLabel = postedDaysAgo === 0 ? 'Today' : postedDaysAgo === 1 ? 'Yesterday' : `${postedDaysAgo} days ago`;
 
   useSEO({
     title: job ? `${job.role_title} at ${job.company_name} - Apply Now` : 'Job Details',
@@ -83,7 +94,6 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
           name: job.company_name || '',
           ...(job.company_logo_url ? { logo: job.company_logo_url } : {}),
           ...(job.company_website ? { sameAs: job.company_website } : {}),
-          ...(job.company_description ? { description: job.company_description } : {}),
         },
         jobLocation: {
           '@type': 'Place',
@@ -95,22 +105,14 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
         },
         employmentType: 'FULL_TIME',
         url: `https://primoboost.ai/jobs/${job.id}`,
-        ...(job.qualification ? { qualifications: job.qualification } : {}),
-        ...(job.experience_required ? { experienceRequirements: job.experience_required } : {}),
-        ...(job.skills && job.skills.length > 0 ? { skills: job.skills.join(', ') } : {}),
       };
-
       if (job.package_amount) {
         jsonLd.baseSalary = {
           '@type': 'MonetarySalary',
           currency: job.package_currency || 'INR',
-          value: {
-            '@type': 'QuantitativeValue',
-            value: job.package_amount,
-          },
+          value: { '@type': 'QuantitativeValue', value: job.package_amount },
         };
       }
-
       injectJsonLd('job-detail-structured-data', jsonLd);
     }
     return () => removeJsonLd('job-detail-structured-data');
@@ -118,32 +120,18 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
 
   useEffect(() => {
     const fetchJob = async () => {
-      if (!jobId) {
-        navigate('/jobs');
-        return;
-      }
-
+      if (!jobId) { navigate('/jobs'); return; }
       try {
         setLoading(true);
         const jobData = await jobsService.getJobListingById(jobId);
-        if (jobData) {
-          setJob(jobData);
-        } else {
-          navigate('/jobs');
-        }
-      } catch (error) {
-        console.error('Error fetching job:', error);
-        navigate('/jobs');
-      } finally {
-        setLoading(false);
-      }
+        if (jobData) { setJob(jobData); } else { navigate('/jobs'); }
+      } catch { navigate('/jobs'); }
+      finally { setLoading(false); }
     };
-
     fetchJob();
   }, [jobId, navigate]);
 
   const handleApplyClick = () => {
-    // Always open the method modal (mobile and desktop)
     if (!isAuthenticated) {
       onShowAuth(() => setShowApplicationModal(true));
     } else {
@@ -153,14 +141,7 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
 
   const handleManualApply = async () => {
     if (job) {
-      // Log manual application
-      try {
-        await jobsService.logManualApplication(job.id, '', job.application_link);
-      } catch (error) {
-        console.error('Error logging manual application:', error);
-      }
-
-      // Redirect to company application link
+      try { await jobsService.logManualApplication(job.id, '', job.application_link); } catch {}
       window.open(job.application_link, '_blank');
       setShowApplicationModal(false);
     }
@@ -173,38 +154,20 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
       job.full_description || job.description,
       job.short_description ? `\n\nKey Points: ${job.short_description}` : '',
       job.qualification ? `\n\nQualifications: ${job.qualification}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-
+    ].filter(Boolean).join('\n');
     navigate('/optimizer', {
-      state: {
-        jobId: job.id,
-        jobDescription: fullJobDescription,
-        roleTitle: job.role_title,
-        companyName: job.company_name,
-        fromJobApplication: true,
-      },
+      state: { jobId: job.id, jobDescription: fullJobDescription, roleTitle: job.role_title, companyName: job.company_name, fromJobApplication: true },
     });
   };
 
   const handleScoreCheck = () => {
     if (!job) return;
-
     const fullJobDescription = [
       job.full_description || job.description,
       job.short_description ? `\n\nKey Points: ${job.short_description}` : '',
       job.qualification ? `\n\nQualifications: ${job.qualification}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    navigate('/score-checker', {
-      state: {
-        jobDescription: fullJobDescription,
-        jobTitle: job.role_title,
-      },
-    });
+    ].filter(Boolean).join('\n');
+    navigate('/score-checker', { state: { jobDescription: fullJobDescription, jobTitle: job.role_title } });
     setShowApplicationModal(false);
   };
 
@@ -218,71 +181,30 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
     const url = window.location.href;
     try {
       if ((navigator as any).share) {
-        await (navigator as any).share({
-          title: (job?.role_title || 'Job') + ' at ' + (job?.company_name || ''),
-          url,
-        });
+        await (navigator as any).share({ title: `${job?.role_title || 'Job'} at ${job?.company_name || ''}`, url });
         return;
       }
-    } catch (e) {
-      // fallthrough to copy
-    }
+    } catch {}
     try {
       await navigator.clipboard.writeText(url);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
-    } catch (e) {
-      // no-op
-    }
+    } catch {}
   };
 
   const formatSalary = (amount: number, type: string) => {
-    if (type === 'CTC') {
-      return `₹${(amount / 100000).toFixed(1)}L per year`;
-    } else if (type === 'stipend') {
-      return `₹${amount.toLocaleString()} per month`;
-    } else if (type === 'hourly') {
-      return `₹${amount} per hour`;
-    }
-    return `₹${amount.toLocaleString()}`;
-  };
-
-  const getTestBadge = (testType: string, hasTest: boolean) => {
-    if (!hasTest) return null;
-
-    const testConfig = {
-      coding: { icon: Code, label: 'Coding Test', color: 'from-blue-500 to-cyan-500' },
-      aptitude: { icon: Brain, label: 'Aptitude Test', color: 'from-green-500 to-emerald-500' },
-      technical: {
-        icon: MessageCircle,
-        label: 'Technical Interview',
-        color: 'from-purple-500 to-pink-500',
-      },
-      hr: { icon: UserCheck, label: 'HR Interview', color: 'from-orange-500 to-red-500' },
-    };
-
-    const config = testConfig[testType as keyof typeof testConfig];
-    if (!config) return null;
-
-    const Icon = config.icon;
-
-    return (
-      <div
-        key={testType}
-        className={`flex items-center space-x-2 bg-gradient-to-r ${config.color} px-4 py-2 rounded-lg text-white text-sm font-medium shadow-md`}
-      >
-        <Icon className="w-4 h-4" />
-        <span>{config.label}</span>
-      </div>
-    );
+    if (type === 'CTC') return `${(amount / 100000).toFixed(1)}L per year`;
+    if (type === 'stipend') return `${amount.toLocaleString()} per month`;
+    if (type === 'hourly') return `${amount} per hour`;
+    return `${amount.toLocaleString()}`;
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="flex flex-col items-center">
-          <Loader2 className="w-12 h-12 animate-spin text-emerald-400 mb-4" />
-          <p className="text-lg text-slate-300">Loading job details...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-emerald-400 mb-3" />
+          <p className="text-slate-400">Loading job details...</p>
         </div>
       </div>
     );
@@ -293,10 +215,7 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="text-center">
           <p className="text-xl text-slate-300 mb-4">Job not found</p>
-          <button
-            onClick={() => navigate('/jobs')}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-xl transition-colors"
-          >
+          <button onClick={() => navigate('/jobs')} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-xl transition-colors">
             Back to Jobs
           </button>
         </div>
@@ -304,456 +223,463 @@ export const JobDetailsPageNew: React.FC<JobDetailsPageProps> = ({ onShowAuth })
     );
   }
 
+  const hasSelectionProcess = job.has_coding_test || job.has_aptitude_test || job.has_technical_interview || job.has_hr_interview;
+  const skillTags = job.skills || [];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 lg:pl-16 transition-colors duration-300 pb-24 lg:pb-8">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Breadcrumb + Share */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-          <nav aria-label="Breadcrumb" className="text-sm text-slate-400">
-            <ol className="flex flex-wrap items-center gap-1">
-              <li>
-                <button onClick={() => navigate('/jobs')} className="hover:text-emerald-400 font-medium transition-colors">
-                  Jobs
-                </button>
-              </li>
-              <li className="mx-1" aria-hidden="true">/</li>
-              <li className="truncate max-w-[12rem] sm:max-w-xs" title={job.company_name}>
-                {job.company_name}
-              </li>
-              <li className="mx-1" aria-hidden="true">/</li>
-              <li className="truncate font-semibold text-slate-200 max-w-[14rem] sm:max-w-sm" title={job.role_title}>
-                {job.role_title}
-              </li>
-            </ol>
-          </nav>
-          <div className="mt-2 sm:mt-0 flex items-center gap-2">
-            <button
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  setCopiedLink(true);
-                  setTimeout(() => setCopiedLink(false), 2000);
-                } catch {}
-              }}
-              className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 text-sm font-medium hover:bg-slate-700/50 transition-colors"
-            >
-              {copiedLink ? (
-                <span className="inline-flex items-center gap-1"><Check className="w-4 h-4 text-emerald-400" />Copied</span>
-              ) : (
-                <span className="inline-flex items-center gap-1"><Copy className="w-4 h-4" />Copy link</span>
-              )}
-            </button>
-            <button
-              onClick={shareOrCopyLink}
-              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium inline-flex items-center gap-1 transition-colors"
-            >
-              <Share2 className="w-4 h-4" /> Share
-            </button>
+      {/* Top Bar */}
+      <div className="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/40">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="flex items-center justify-between h-14">
+            <nav className="flex items-center gap-1.5 text-sm text-slate-400 min-w-0">
+              <button onClick={() => navigate('/jobs')} className="hover:text-emerald-400 transition-colors font-medium flex items-center gap-1 flex-shrink-0">
+                <ArrowLeft className="w-4 h-4 lg:hidden" />
+                <span>Jobs</span>
+              </button>
+              <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 hidden sm:block" />
+              <span className="truncate max-w-[10rem] hidden sm:block">{job.company_name}</span>
+              <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 hidden sm:block" />
+              <span className="truncate max-w-[14rem] font-medium text-slate-200 hidden sm:block">{job.role_title}</span>
+            </nav>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 2000); } catch {} }}
+                className="px-2.5 py-1.5 rounded-lg border border-slate-700 text-slate-400 text-xs font-medium hover:bg-slate-800 transition-colors flex items-center gap-1.5"
+              >
+                {copiedLink ? <><Check className="w-3.5 h-3.5 text-emerald-400" />Copied</> : <><Copy className="w-3.5 h-3.5" />Copy</>}
+              </button>
+              <button
+                onClick={shareOrCopyLink}
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
+              >
+                <Share2 className="w-3.5 h-3.5" /> Share
+              </button>
+            </div>
           </div>
         </div>
-        {/* Back Button (mobile only; breadcrumb replaces it on larger screens) */}
-        <button
-          onClick={() => navigate('/jobs')}
-          className="sm:hidden mb-6 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 shadow-md hover:shadow-lg py-3 px-5 rounded-xl inline-flex items-center space-x-2 transition-all duration-200 border border-slate-700"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back to Jobs</span>
-        </button>
+      </div>
 
-        {/* Main Content */}
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Main Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Job Header Card */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-700/50 p-8">
-              <div className="flex items-start gap-6 mb-6">
-                {job.company_logo_url ? (
-                  <img
-                    src={job.company_logo_url}
-                    alt={`${job.company_name} logo - ${job.role_title} job opening`}
-                    className="w-20 h-20 rounded-xl object-contain bg-slate-700/50 p-2 border border-slate-600"
-                    loading="eager"
-                    width={80}
-                    height={80}
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-                    {job.company_name.charAt(0)}
-                  </div>
-                )}
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Hero Card */}
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-700/40 overflow-hidden">
+              {/* Company Banner Strip */}
+              <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500" />
 
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-slate-100 mb-2">
-                    {job.role_title}
-                  </h1>
-                  <p className="text-xl text-slate-300 mb-3">
+              <div className="p-6 sm:p-8">
+                <div className="flex items-start gap-5">
+                  {job.company_logo_url ? (
+                    <img
+                      src={job.company_logo_url}
+                      alt={`${job.company_name} logo`}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-contain bg-white/5 p-2 border border-slate-700/50 flex-shrink-0"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
+                      {job.company_name.charAt(0)}
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 leading-tight">
+                      {job.role_title}
+                    </h1>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/jobs/company/${job.company_name.toLowerCase().replace(/\s+/g, '-')}`);
-                      }}
-                      className="hover:text-emerald-400 transition-colors"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/jobs/company/${job.company_name.toLowerCase().replace(/\s+/g, '-')}`); }}
+                      className="text-base sm:text-lg text-slate-300 hover:text-emerald-400 transition-colors font-medium"
                     >
                       {job.company_name}
                     </button>
-                  </p>
 
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full font-medium border border-blue-500/30">
-                      {job.domain}
-                    </span>
-                    <span className="px-3 py-1 bg-green-500/20 text-green-300 text-sm rounded-full font-medium border border-green-500/30">
-                      {job.location_type}
-                    </span>
-                    {job.location_city && (
-                      <span className="px-3 py-1 bg-purple-500/20 text-purple-300 text-sm rounded-full font-medium flex items-center border border-purple-500/30">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        {job.location_city}
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      {job.location_city && (
+                        <span className="inline-flex items-center gap-1 text-sm text-slate-300">
+                          <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                          {job.location_city}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1 text-sm text-slate-300">
+                        <Briefcase className="w-3.5 h-3.5 text-slate-500" />
+                        {job.location_type}
                       </span>
-                    )}
-                    {eligibleYearTags.length > 0 && (
-                      <span className="px-3 py-1 bg-amber-500/20 text-amber-300 text-sm rounded-full font-medium flex items-center border border-amber-500/30">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        Eligible: {eligibleYearTags.join(' / ')}
+                      <span className="inline-flex items-center gap-1 text-sm text-slate-300">
+                        <Clock className="w-3.5 h-3.5 text-slate-500" />
+                        {postedLabel}
                       </span>
-                    )}
-                    {job.ai_polished && (
-                      <span className="px-3 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-300 text-sm rounded-full font-medium flex items-center border border-purple-500/30">
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        AI Enhanced
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Key Info - Modified to remove conditional button */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-slate-700/50">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-blue-500/20 p-2 rounded-lg">
-                    <Clock className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Experience</p>
-                    <p className="font-semibold text-slate-100">
-                      {job.experience_required}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <div className="bg-green-500/20 p-2 rounded-lg">
-                    <Users className="w-5 h-5 text-green-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Qualification</p>
-                    <p className="font-semibold text-slate-100 text-sm">
-                      {job.qualification}
-                    </p>
-                  </div>
-                </div>
-
-                {job.package_amount && job.package_type && (
-                  <div className="flex items-center space-x-3 md:col-span-2">
-                    <div className="bg-purple-500/20 p-2 rounded-lg">
-                      <Award className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400">Package</p>
-                      <p className="font-semibold text-slate-100 text-sm">
-                        {formatSalary(job.package_amount, job.package_type)}
-                      </p>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Apply Button - Now Always Visible on Desktop */}
-              <div className="mt-6 hidden lg:block">
-                <button
-                  onClick={handleApplyClick}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 transform hover:scale-[1.02] flex items-center justify-center space-x-2"
-                >
-                  <Briefcase className="w-5 h-5" />
-                  <span>Apply Now</span>
-                </button>
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2 mt-5">
+                  <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-lg font-medium border border-emerald-500/20">
+                    {job.domain}
+                  </span>
+                  <span className="px-2.5 py-1 bg-blue-500/10 text-blue-400 text-xs rounded-lg font-medium border border-blue-500/20">
+                    {job.location_type}
+                  </span>
+                  {eligibleYearTags.length > 0 && (
+                    <span className="px-2.5 py-1 bg-amber-500/10 text-amber-400 text-xs rounded-lg font-medium border border-amber-500/20 flex items-center gap-1">
+                      <GraduationCap className="w-3 h-3" />
+                      {eligibleYearTags.join(' / ')}
+                    </span>
+                  )}
+                  {job.has_referral && (
+                    <span className="px-2.5 py-1 bg-green-500/15 text-green-400 text-xs rounded-lg font-semibold border border-green-500/30 flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      Referral
+                    </span>
+                  )}
+                  {job.ai_polished && (
+                    <span className="px-2.5 py-1 bg-cyan-500/10 text-cyan-400 text-xs rounded-lg font-medium border border-cyan-500/20 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      AI Enhanced
+                    </span>
+                  )}
+                </div>
+
+                {/* Apply CTA - Desktop */}
+                <div className="mt-6 hidden lg:flex items-center gap-3">
+                  <button
+                    onClick={handleApplyClick}
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-emerald-500/20 flex items-center gap-2"
+                  >
+                    <Zap className="w-5 h-5" />
+                    Apply Now
+                  </button>
+                  <button
+                    onClick={() => job.application_link && window.open(job.application_link, '_blank')}
+                    className="border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500 font-medium py-3 px-6 rounded-xl transition-colors flex items-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Company Site
+                  </button>
+                </div>
               </div>
             </div>
 
+            {/* Key Details Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-slate-800/60 rounded-xl border border-slate-700/40 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-blue-400" />
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Experience</span>
+                </div>
+                <p className="text-sm font-semibold text-white">{job.experience_required}</p>
+              </div>
+              <div className="bg-slate-800/60 rounded-xl border border-slate-700/40 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <GraduationCap className="w-4 h-4 text-green-400" />
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Qualification</span>
+                </div>
+                <p className="text-sm font-semibold text-white leading-snug">{job.qualification}</p>
+              </div>
+              {job.package_amount && job.package_type ? (
+                <div className="bg-slate-800/60 rounded-xl border border-slate-700/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <IndianRupee className="w-4 h-4 text-amber-400" />
+                    <span className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Package</span>
+                  </div>
+                  <p className="text-sm font-semibold text-white">{formatSalary(job.package_amount, job.package_type)}</p>
+                </div>
+              ) : (
+                <div className="bg-slate-800/60 rounded-xl border border-slate-700/40 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-4 h-4 text-cyan-400" />
+                    <span className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Location</span>
+                  </div>
+                  <p className="text-sm font-semibold text-white">{job.location_city || job.location_type}</p>
+                </div>
+              )}
+              <div className="bg-slate-800/60 rounded-xl border border-slate-700/40 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-4 h-4 text-rose-400" />
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Posted</span>
+                </div>
+                <p className="text-sm font-semibold text-white">{postedLabel}</p>
+              </div>
+            </div>
+
+            {/* Skills */}
+            {skillTags.length > 0 && (
+              <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
+                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <Target className="w-5 h-5 text-cyan-400" />
+                  Skills Required
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {skillTags.map((skill, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-slate-700/50 text-slate-200 rounded-lg text-sm font-medium border border-slate-600/40">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* About the Company */}
             {job.company_description && (
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-700/50 p-8">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Building2 className="w-6 h-6 text-blue-400" />
-                  <h2 className="text-2xl font-bold text-slate-100">
-                    About the Company
-                  </h2>
-                </div>
-                <p className="text-slate-300 leading-relaxed whitespace-pre-line">
+              <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
+                <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-blue-400" />
+                  About {job.company_name}
+                </h2>
+                <p className="text-slate-300 leading-relaxed text-[15px] whitespace-pre-line">
                   {job.company_description}
                 </p>
                 {job.company_website && (
-                  <a
-                    href={job.company_website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-2 text-emerald-400 hover:text-emerald-300 mt-4 font-medium transition-colors"
-                  >
+                  <a href={job.company_website} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 mt-4 text-sm font-medium transition-colors">
                     <Globe className="w-4 h-4" />
-                    <span>Visit Company Website</span>
-                    <ExternalLink className="w-4 h-4" />
+                    Visit Website
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 )}
               </div>
             )}
 
             {/* Job Description */}
-            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-700/50 p-8">
-              <div className="flex items-center space-x-3 mb-4">
-                <FileText className="w-6 h-6 text-purple-400" />
-                <h2 className="text-2xl font-bold text-slate-100">
-                  Job Description
-                </h2>
-              </div>
-              <div className="prose prose-sm max-w-none prose-invert">
-                <p className="text-slate-300 leading-relaxed whitespace-pre-line">
-                  {job.full_description || job.description}
-                </p>
+            <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
+              <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-emerald-400" />
+                Job Description
+              </h2>
+              <div className="text-slate-300 leading-relaxed text-[15px] whitespace-pre-line">
+                {job.full_description || job.description}
               </div>
             </div>
 
-            {/* Referral Section */}
-            {job.has_referral && (
-              <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 rounded-2xl shadow-lg border-2 border-green-500/30 p-8">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="bg-green-600 p-2 rounded-lg">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-100">
-                    Referral Available
-                  </h2>
-                </div>
-
-                <p className="text-slate-300 mb-6">
-                  This job has an employee referral program. Connect with the referrer for a
-                  better chance of getting hired!
+            {/* Selection Process */}
+            {hasSelectionProcess && (
+              <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
+                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <Target className="w-5 h-5 text-amber-400" />
+                  Selection Process
+                </h2>
+                <p className="text-slate-400 text-sm mb-5">
+                  The hiring process includes the following stages:
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {job.referral_person_name && (
-                    <div className="bg-slate-800/50 p-4 rounded-xl border border-green-500/30">
-                      <p className="text-sm text-slate-400 mb-1">
-                        Referral Contact
-                      </p>
-                      <p className="font-semibold text-slate-100">
-                        {job.referral_person_name}
-                      </p>
+                <div className="flex flex-wrap gap-3">
+                  {job.has_coding_test && (
+                    <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2.5 rounded-xl">
+                      <Code className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm font-medium text-blue-300">Coding Test</span>
                     </div>
                   )}
+                  {job.has_aptitude_test && (
+                    <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-2.5 rounded-xl">
+                      <Brain className="w-4 h-4 text-green-400" />
+                      <span className="text-sm font-medium text-green-300">Aptitude Test</span>
+                    </div>
+                  )}
+                  {job.has_technical_interview && (
+                    <div className="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 px-4 py-2.5 rounded-xl">
+                      <MessageCircle className="w-4 h-4 text-cyan-400" />
+                      <span className="text-sm font-medium text-cyan-300">Technical Interview</span>
+                    </div>
+                  )}
+                  {job.has_hr_interview && (
+                    <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-4 py-2.5 rounded-xl">
+                      <UserCheck className="w-4 h-4 text-orange-400" />
+                      <span className="text-sm font-medium text-orange-300">HR Interview</span>
+                    </div>
+                  )}
+                </div>
 
+                {job.test_duration_minutes && (
+                  <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
+                    <Clock className="w-4 h-4" />
+                    <span>Estimated duration: <span className="text-white font-medium">{job.test_duration_minutes} minutes</span></span>
+                  </div>
+                )}
+
+                {job.test_requirements && (
+                  <div className="mt-4 bg-slate-700/30 rounded-xl p-4 border border-slate-600/30">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-2">What to Expect</p>
+                    <p className="text-sm text-slate-300 whitespace-pre-line">{job.test_requirements}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Referral Section */}
+            {job.has_referral && (
+              <div className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-2xl border border-green-500/20 p-6">
+                <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-green-400" />
+                  Employee Referral Available
+                </h2>
+                <p className="text-sm text-slate-400 mb-5">
+                  This position has an employee referral program. Use the referral for a better chance.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {job.referral_person_name && (
+                    <div className="bg-slate-800/70 p-4 rounded-xl border border-green-500/15">
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1">Contact</p>
+                      <p className="font-semibold text-white text-sm">{job.referral_person_name}</p>
+                    </div>
+                  )}
                   {job.referral_email && (
-                    <div className="bg-slate-800/50 p-4 rounded-xl border border-green-500/30">
-                      <p className="text-sm text-slate-400 mb-1">Email</p>
-                      <a
-                        href={`mailto:${job.referral_email}`}
-                        className="font-semibold text-green-400 hover:text-green-300 flex items-center space-x-2 transition-colors"
-                      >
-                        <Mail className="w-4 h-4" />
-                        <span>{job.referral_email}</span>
+                    <div className="bg-slate-800/70 p-4 rounded-xl border border-green-500/15">
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1">Email</p>
+                      <a href={`mailto:${job.referral_email}`} className="font-semibold text-green-400 hover:text-green-300 text-sm flex items-center gap-1.5 transition-colors">
+                        <Mail className="w-3.5 h-3.5" />
+                        {job.referral_email}
                       </a>
                     </div>
                   )}
-
                   {job.referral_code && (
-                    <div className="bg-slate-800/50 p-4 rounded-xl border border-green-500/30">
-                      <p className="text-sm text-slate-400 mb-1">
-                        Referral Code
-                      </p>
-                      <div className="flex items-center space-x-2">
-                        <code className="font-mono font-semibold text-slate-100 bg-slate-700/50 px-2 py-1 rounded">
-                          {job.referral_code}
-                        </code>
-                        <button
-                          onClick={() => copyReferralCode(job.referral_code!)}
-                          className="p-2 hover:bg-green-500/20 rounded-lg transition-colors"
-                          title="Copy referral code"
-                        >
-                          {copiedReferralCode ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <Copy className="w-4 h-4 text-slate-400" />
-                          )}
+                    <div className="bg-slate-800/70 p-4 rounded-xl border border-green-500/15">
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1">Referral Code</p>
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono font-semibold text-white bg-slate-700/50 px-2 py-0.5 rounded text-sm">{job.referral_code}</code>
+                        <button onClick={() => copyReferralCode(job.referral_code!)} className="p-1.5 hover:bg-green-500/20 rounded-lg transition-colors">
+                          {copiedReferralCode ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
                         </button>
                       </div>
                     </div>
                   )}
-
                   {job.referral_bonus_amount && (
-                    <div className="bg-slate-800/50 p-4 rounded-xl border border-green-500/30">
-                      <p className="text-sm text-slate-400 mb-1">
-                        Referral Bonus
-                      </p>
-                      <p className="font-semibold text-green-400 text-lg">
-                        ₹{job.referral_bonus_amount.toLocaleString()}
-                      </p>
+                    <div className="bg-slate-800/70 p-4 rounded-xl border border-green-500/15">
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1">Referral Bonus</p>
+                      <p className="font-bold text-green-400 text-lg">{job.referral_bonus_amount.toLocaleString()}</p>
                     </div>
                   )}
                 </div>
 
                 {job.referral_terms && (
-                  <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-green-500/30">
-                    <p className="text-sm text-slate-400 mb-2">
-                      Terms & Conditions
-                    </p>
+                  <div className="mt-4 bg-slate-800/70 rounded-xl p-4 border border-green-500/15">
+                    <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium mb-1.5">Terms</p>
                     <p className="text-sm text-slate-300">{job.referral_terms}</p>
                   </div>
                 )}
 
                 {job.referral_link && (
-                  <a
-                    href={job.referral_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center space-x-2 text-green-400 hover:text-green-300 font-medium transition-colors"
-                  >
+                  <a href={job.referral_link} target="_blank" rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-1.5 text-green-400 hover:text-green-300 text-sm font-medium transition-colors">
                     <ExternalLink className="w-4 h-4" />
-                    <span>Apply via Referral Link</span>
+                    Apply via Referral Link
                   </a>
-                )}
-              </div>
-            )}
-
-            {/* Test Patterns Section */}
-            {(job.has_coding_test ||
-              job.has_aptitude_test ||
-              job.has_technical_interview ||
-              job.has_hr_interview) && (
-              <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-2xl shadow-lg border-2 border-purple-500/30 p-8">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="bg-purple-600 p-2 rounded-lg">
-                    <Target className="w-6 h-6 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-slate-100">
-                    Selection Process
-                  </h2>
-                </div>
-
-                <p className="text-slate-300 mb-6">
-                  The hiring process includes the following assessments and interviews:
-                </p>
-
-                <div className="flex flex-wrap gap-3 mb-6">
-                  {getTestBadge('coding', job.has_coding_test ?? false)}
-                  {getTestBadge('aptitude', job.has_aptitude_test ?? false)}
-                  {getTestBadge('technical', job.has_technical_interview ?? false)}
-                  {getTestBadge('hr', job.has_hr_interview ?? false)}
-                </div>
-
-                {job.test_duration_minutes && (
-                  <div className="bg-slate-800/50 p-4 rounded-xl border border-purple-500/30 mb-4">
-                    <p className="text-sm text-slate-400 mb-1">
-                      Estimated Total Duration
-                    </p>
-                    <p className="font-semibold text-slate-100 text-lg">
-                      {job.test_duration_minutes} minutes
-                    </p>
-                  </div>
-                )}
-
-                {job.test_requirements && (
-                  <div className="bg-slate-800/50 p-4 rounded-xl border border-purple-500/30">
-                    <p className="text-sm text-slate-400 mb-2">
-                      What to Expect
-                    </p>
-                    <p className="text-sm text-slate-300 whitespace-pre-line">
-                      {job.test_requirements}
-                    </p>
-                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Right Column - Sticky Apply Card */}
+          {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-4">
-              {/* Apply Action Card - NOW WITH BUTTON */}
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-700/50 p-6">
-                <div className="text-center mb-4">
-                  <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-100 mb-2">
-                    Ready to Apply?
-                  </h3>
-                  <p className="text-sm text-slate-400 mb-4">
-                    Choose between manual or AI-optimized application for better chances
-                  </p>
-                </div>
-                
-                {/* Apply Button in Sidebar */}
+            <div className="sticky top-20 space-y-4">
+              {/* Apply Card */}
+              <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
+                <h3 className="text-base font-bold text-white mb-3">Apply for this role</h3>
+                <p className="text-sm text-slate-400 mb-5">
+                  Choose manual apply or optimize your resume with AI for a better match.
+                </p>
                 <button
                   onClick={handleApplyClick}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 transform hover:scale-[1.02] flex items-center justify-center space-x-2"
+                  className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-emerald-500/20 flex items-center justify-center gap-2"
                 >
-                  <Briefcase className="w-5 h-5" />
-                  <span>Apply Now</span>
+                  <Zap className="w-5 h-5" />
+                  Apply Now
+                </button>
+                <button
+                  onClick={() => job.application_link && window.open(job.application_link, '_blank')}
+                  className="w-full mt-2.5 border border-slate-600 text-slate-300 hover:text-white hover:border-slate-500 font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Apply on Company Site
                 </button>
               </div>
 
-              {/* Quick Stats */}
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-700/50 p-6">
-                <h3 className="font-semibold text-slate-100 mb-4">
-                  Quick Info
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400">Posted</span>
-                    <span className="font-medium text-slate-100">
-                      {new Date(job.posted_date).toLocaleDateString()}
-                    </span>
+              {/* Quick Info */}
+              <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
+                <h3 className="text-base font-bold text-white mb-4">Job Overview</h3>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-500/10 p-2 rounded-lg mt-0.5"><Briefcase className="w-4 h-4 text-blue-400" /></div>
+                    <div>
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Role</p>
+                      <p className="text-sm font-medium text-white">{job.role_title}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400">Job Type</span>
-                    <span className="font-medium text-slate-100">
-                      {job.location_type}
-                    </span>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-emerald-500/10 p-2 rounded-lg mt-0.5"><Building2 className="w-4 h-4 text-emerald-400" /></div>
+                    <div>
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Company</p>
+                      <p className="text-sm font-medium text-white">{job.company_name}</p>
+                    </div>
                   </div>
-                  {eligibleYearTags.length > 0 && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400">Eligible Batches</span>
-                      <span className="font-medium text-slate-100 text-right">
-                        {eligibleYearTags.join(' / ')}
-                      </span>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-cyan-500/10 p-2 rounded-lg mt-0.5"><MapPin className="w-4 h-4 text-cyan-400" /></div>
+                    <div>
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Location</p>
+                      <p className="text-sm font-medium text-white">{job.location_city || job.location_type}</p>
+                    </div>
+                  </div>
+                  {job.package_amount && job.package_type && (
+                    <div className="flex items-start gap-3">
+                      <div className="bg-amber-500/10 p-2 rounded-lg mt-0.5"><IndianRupee className="w-4 h-4 text-amber-400" /></div>
+                      <div>
+                        <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Compensation</p>
+                        <p className="text-sm font-medium text-white">{formatSalary(job.package_amount, job.package_type)}</p>
+                      </div>
                     </div>
                   )}
-                  {job.has_referral && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400">Referral</span>
-                      <span className="font-medium text-green-400">
-                        Available
-                      </span>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-rose-500/10 p-2 rounded-lg mt-0.5"><Clock className="w-4 h-4 text-rose-400" /></div>
+                    <div>
+                      <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Experience</p>
+                      <p className="text-sm font-medium text-white">{job.experience_required}</p>
+                    </div>
+                  </div>
+                  {eligibleYearTags.length > 0 && (
+                    <div className="flex items-start gap-3">
+                      <div className="bg-green-500/10 p-2 rounded-lg mt-0.5"><GraduationCap className="w-4 h-4 text-green-400" /></div>
+                      <div>
+                        <p className="text-[11px] text-slate-500 uppercase tracking-wider font-medium">Eligible Batches</p>
+                        <p className="text-sm font-medium text-white">{eligibleYearTags.join(' / ')}</p>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Short Description */}
+              {job.short_description && (
+                <div className="bg-slate-800/60 rounded-2xl border border-slate-700/40 p-6">
+                  <h3 className="text-base font-bold text-white mb-3">Summary</h3>
+                  <p className="text-sm text-slate-300 leading-relaxed">{job.short_description}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Fixed Bottom Apply Button (Mobile Only) */}
-      <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 p-4 shadow-2xl z-40">
-        <button
-          onClick={handleApplyClick}
-          className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center space-x-2"
-        >
-          <Briefcase className="w-5 h-5" />
-          <span>Apply Now</span>
-        </button>
+      {/* Fixed Bottom Apply (Mobile) */}
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/40 p-3 shadow-2xl z-40">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleApplyClick}
+            className="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+          >
+            <Zap className="w-5 h-5" />
+            Apply Now
+          </button>
+          <button
+            onClick={() => job.application_link && window.open(job.application_link, '_blank')}
+            className="py-3.5 px-4 border border-slate-600 text-slate-300 rounded-xl transition-colors"
+          >
+            <ExternalLink className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Application Method Modal */}
       <ApplicationMethodModal
         isOpen={showApplicationModal}
         onClose={() => setShowApplicationModal(false)}

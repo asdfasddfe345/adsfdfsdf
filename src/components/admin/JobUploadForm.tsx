@@ -211,10 +211,12 @@ export const JobUploadForm: React.FC = () => {
     }
   };
 
-  const domainOptions = [
-    'SDE', 'Data Science', 'Product', 'Design', 'Marketing', 'Sales', 
-    'Analytics', 'AI', 'DevOps', 'Mobile', 'Frontend', 'Backend', 
-    'Full-Stack', 'QA', 'Content', 'HR', 'Finance', 'Operations'
+  const domainSuggestions = [
+    'SDE', 'Data Science', 'Product', 'Design', 'Marketing', 'Sales',
+    'Analytics', 'AI', 'DevOps', 'Mobile', 'Frontend', 'Backend',
+    'Full-Stack', 'QA', 'Content', 'HR', 'Finance', 'Operations',
+    'Cloud', 'Security', 'Blockchain', 'IoT', 'Machine Learning',
+    'Data Engineering', 'Business Analyst', 'Consulting', 'Support',
   ];
 
   return (
@@ -412,15 +414,21 @@ export const JobUploadForm: React.FC = () => {
                     <Target className="w-4 h-4 inline mr-1" />
                     Domain *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     {...register('domain')}
+                    list="domain-suggestions"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-dark-200 dark:border-dark-300 dark:text-gray-100"
-                  >
-                    <option value="">Select Domain</option>
-                    {domainOptions.map(domain => (
-                      <option key={domain} value={domain}>{domain}</option>
+                    placeholder="e.g., SDE, Data Science, Product, DevOps"
+                  />
+                  <datalist id="domain-suggestions">
+                    {domainSuggestions.map(d => (
+                      <option key={d} value={d} />
                     ))}
-                  </select>
+                  </datalist>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Type a domain or pick from suggestions
+                  </p>
                   {errors.domain && (
                     <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.domain.message}</p>
                   )}

@@ -254,20 +254,22 @@ export const JobCard: React.FC<JobCardProps> = ({
               <div className="flex items-center sm:space-x-2 gap-2 sm:gap-0">
                 {job.is_active ? (
                   <>
-                    <button
-                      onClick={handleAutoApply}
-                      disabled={!autoApplyEnabled}
-                      aria-disabled={!autoApplyEnabled}
-                      className={`relative px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all duration-200 w-auto flex items-center space-x-1 ${autoApplyEnabled ? 'hover:from-emerald-400 hover:to-green-400 hover:shadow-emerald-500/30' : 'opacity-60 cursor-not-allowed'}`}
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      <span>Auto Apply</span>
+                    <div className="relative">
+                      <button
+                        onClick={handleAutoApply}
+                        disabled={!autoApplyEnabled}
+                        aria-disabled={!autoApplyEnabled}
+                        className={`px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all duration-200 w-auto flex items-center space-x-1 ${autoApplyEnabled ? 'hover:from-emerald-400 hover:to-green-400 hover:shadow-emerald-500/30' : 'opacity-50 cursor-not-allowed'}`}
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>Auto Apply</span>
+                      </button>
                       {!autoApplyEnabled && (
-                        <span className="absolute inset-0 rounded-lg bg-black/40 flex items-center justify-center text-[10px] font-semibold">
-                          Coming soon
+                        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-amber-500 text-[8px] font-bold text-white rounded-full leading-none whitespace-nowrap shadow-sm">
+                          Soon
                         </span>
                       )}
-                    </button>
+                    </div>
                     <button
                       onClick={handleManualApply}
                       className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg text-sm font-semibold hover:from-cyan-400 hover:to-blue-400 shadow-md hover:shadow-cyan-500/30 transition-all duration-200 w-full sm:w-auto"
