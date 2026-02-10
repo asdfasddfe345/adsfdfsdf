@@ -440,37 +440,6 @@ const SessionCard: React.FC<SessionCardProps> = ({
         </a>
       )}
 
-      {isUpcoming && (
-        <div className="mt-4 pt-3 border-t border-slate-700/50">
-          {showCancelConfirm === booking.id ? (
-            <div className="space-y-2">
-              <p className="text-amber-400 text-xs">Are you sure you want to cancel?</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onCancel(booking.id)}
-                  disabled={cancellingId === booking.id}
-                  className="flex-1 px-3 py-2 rounded-lg bg-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/30 disabled:opacity-50 transition-colors"
-                >
-                  {cancellingId === booking.id ? 'Cancelling...' : 'Yes, Cancel'}
-                </button>
-                <button
-                  onClick={() => onShowCancelConfirm(null)}
-                  className="flex-1 px-3 py-2 rounded-lg border border-slate-700 text-slate-300 text-xs font-medium hover:bg-slate-800/60 transition-colors"
-                >
-                  Keep Booking
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => onShowCancelConfirm(booking.id)}
-              className="text-xs text-red-400/70 hover:text-red-400 transition-colors"
-            >
-              Cancel Booking
-            </button>
-          )}
-        </div>
-      )}
     </motion.div>
   );
 };
