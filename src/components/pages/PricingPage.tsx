@@ -13,13 +13,15 @@ import {
   Users,
   CheckCircle,
   Briefcase,
-  Layers
+  Layers,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FloatingParticles, ChristmasSnow } from '../ui';
 import { paymentService } from '../../services/paymentService';
-import type { PlanCategory, SubscriptionPlan } from '../../types/payment';
+import type { PlanCategory } from '../../types/payment';
 
 interface PricingPageProps {
   onShowAuth: () => void;
@@ -27,10 +29,10 @@ interface PricingPageProps {
 }
 
 const CATEGORY_CONFIG: { key: PlanCategory; label: string; icon: React.ReactNode }[] = [
-  { key: 'combined', label: 'Combined Premium', icon: <Crown className="w-4 h-4" /> },
-  { key: 'jd_only', label: 'JD Optimizer Only', icon: <Target className="w-4 h-4" /> },
-  { key: 'score_only', label: 'Score Checker Only', icon: <TrendingUp className="w-4 h-4" /> },
-  { key: 'combo', label: 'JD + Score Combo', icon: <Layers className="w-4 h-4" /> },
+  { key: 'combined', label: 'Combined Premium', icon: <Crown className="w-3.5 h-3.5" /> },
+  { key: 'jd_only', label: 'JD Optimizer', icon: <Target className="w-3.5 h-3.5" /> },
+  { key: 'score_only', label: 'Score Checker', icon: <TrendingUp className="w-3.5 h-3.5" /> },
+  { key: 'combo', label: 'JD + Score', icon: <Layers className="w-3.5 h-3.5" /> },
 ];
 
 const getPlanIcon = (iconType: string) => {
@@ -51,8 +53,95 @@ export const PricingPage: React.FC<PricingPageProps> = ({
   const { isAuthenticated } = useAuth();
   const { isChristmasMode } = useTheme();
   const [activeCategory, setActiveCategory] = useState<PlanCategory>('combined');
+  const [mobileSlide, setMobileSlide] = useState(0);
+  const [dragStart, setDragStart] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const categoryPlans = paymentService.getPlansByCategory(activeCategory);
+
+  const handleCategoryChange = (cat: PlanCategory) => {
+    setActiveCategory(cat);
+    setMobileSlide(0);
+  };
+
+  const handleSwipe = (startX: number, endX: number) => {
+    const diff = startX - endX;
+    const threshold = 50;
+    if (diff > threshold && mobileSlide < categoryPlans.length - 1) setMobileSlide(prev => prev + 1);
+    else if (diff < -threshold && mobileSlide > 0) setMobileSlide(prev => prev - 1);
+  };
+
+  const renderPlanCard = (plan: typeof categoryPlans[0]) => (
+    <div
+      className={`relative rounded-2xl border backdrop-blur-md transition-all duration-300 hover:scale-[1.02] overflow-hidden ${
+        plan.popular
+          ? 'border-emerald-400/40 bg-white/[0.07] shadow-xl shadow-emerald-500/10'
+          : 'border-white/[0.08] bg-white/[0.04] hover:border-white/[0.15] hover:bg-white/[0.06]'
+      }`}
+    >
+      {plan.popular && (
+        <div className="absolute -top-0 left-1/2 transform -translate-x-1/2 z-10">
+          <span className={`px-5 py-1.5 rounded-b-lg text-xs font-bold shadow-lg ${
+            isChristmasMode
+              ? 'bg-gradient-to-r from-red-500 to-green-500'
+              : 'bg-gradient-to-r from-emerald-500 to-cyan-500'
+          } text-white flex items-center gap-1`}>
+            <Crown className="w-3 h-3" /> Most Popular
+          </span>
+        </div>
+      )}
+
+      <div className="p-6 sm:p-8">
+        <div className="text-center mb-5">
+          <div className={`bg-gradient-to-r ${plan.gradient} w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-white shadow-lg`}>
+            {getPlanIcon(plan.icon)}
+          </div>
+          <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+        </div>
+
+        <div className="text-center mb-5">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-sm text-red-400 line-through">&#8377;{plan.mrp}</span>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+              isChristmasMode
+                ? 'bg-green-500/20 text-green-300 border border-green-500/40'
+                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+            }`}>
+              {plan.discountPercentage}% OFF
+            </span>
+          </div>
+          <div className="text-4xl font-bold text-white">&#8377;{plan.price}</div>
+          <p className="text-slate-400 text-sm mt-1">One-time payment</p>
+        </div>
+
+        <ul className="space-y-2.5 mb-6">
+          {plan.features.map((feature, idx) => (
+            <li key={idx} className="flex items-start">
+              <Check className={`w-4 h-4 mr-2.5 mt-0.5 flex-shrink-0 ${
+                isChristmasMode ? 'text-green-400' : 'text-emerald-400'
+              }`} />
+              <span className="text-slate-300 text-sm">{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <button
+          onClick={() => {
+            if (isAuthenticated) onShowSubscriptionPlans(plan.id, false);
+            else onShowAuth();
+          }}
+          className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+            plan.popular
+              ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-400 hover:to-cyan-400 shadow-lg shadow-emerald-500/20'
+              : 'bg-white/[0.08] text-slate-200 hover:bg-white/[0.12] border border-white/[0.1]'
+          }`}
+        >
+          {isAuthenticated ? 'Select Plan' : 'Sign Up & Select'}
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className={`min-h-screen relative overflow-hidden ${
@@ -73,7 +162,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
       <div className="relative z-10 overflow-hidden">
         <div className="container mx-auto px-4 py-16 sm:py-24">
           <div className="text-center max-w-3xl mx-auto">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl ${
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl backdrop-blur-xl ${
               isChristmasMode
                 ? 'bg-gradient-to-br from-red-500 via-yellow-400 to-green-600 shadow-green-500/30'
                 : 'bg-gradient-to-br from-emerald-500 to-cyan-500 shadow-emerald-500/30'
@@ -83,9 +172,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight text-white tracking-tight">
               Choose Your{' '}
               <span className={`bg-gradient-to-r bg-clip-text text-transparent ${
-                isChristmasMode
-                  ? 'from-red-400 via-yellow-400 to-green-400'
-                  : 'from-emerald-400 via-cyan-400 to-teal-400'
+                isChristmasMode ? 'from-red-400 via-yellow-400 to-green-400' : 'from-emerald-400 via-cyan-400 to-teal-400'
               }`}>
                 Success Plan
               </span>
@@ -97,19 +184,40 @@ export const PricingPage: React.FC<PricingPageProps> = ({
         </div>
       </div>
 
-      {/* Category Tabs */}
+      {/* Category Tabs - Horizontal scroll on mobile */}
       <div className="relative z-10">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+          {/* Mobile: horizontal scroll pills */}
+          <div className="sm:hidden mb-8 -mx-4 px-4">
+            <div className="flex gap-2.5 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+              {CATEGORY_CONFIG.map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => handleCategoryChange(cat.key)}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border backdrop-blur-xl transition-all duration-300 whitespace-nowrap ${
+                    activeCategory === cat.key
+                      ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                      : 'border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]'
+                  }`}
+                >
+                  {cat.icon}
+                  <span className="text-sm font-medium">{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop: centered pills */}
+          <div className="hidden sm:block max-w-4xl mx-auto">
             <div className="flex flex-wrap justify-center gap-2 mb-10">
               {CATEGORY_CONFIG.map((cat) => (
                 <button
                   key={cat.key}
-                  onClick={() => setActiveCategory(cat.key)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                  onClick={() => handleCategoryChange(cat.key)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium backdrop-blur-xl transition-all duration-300 ${
                     activeCategory === cat.key
                       ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/25'
-                      : 'bg-slate-800/60 text-slate-400 hover:bg-slate-700/60 hover:text-slate-200 border border-slate-700/50'
+                      : 'bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] border border-white/[0.08]'
                   }`}
                 >
                   {cat.icon}
@@ -132,92 +240,95 @@ export const PricingPage: React.FC<PricingPageProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ duration: 0.25 }}
-                className={`grid gap-6 ${
-                  categoryPlans.length <= 2
-                    ? 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto'
-                    : categoryPlans.length === 3
-                      ? 'grid-cols-1 md:grid-cols-3'
-                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
-                }`}
               >
-                {categoryPlans.map((plan, index) => (
-                  <motion.div
-                    key={plan.id}
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.08 }}
-                    className={`relative rounded-2xl border backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
-                      plan.popular
-                        ? 'border-emerald-400/50 bg-gradient-to-b from-emerald-500/10 to-cyan-500/5 shadow-xl shadow-emerald-500/10'
-                        : 'border-slate-700/50 bg-slate-900/60 hover:border-slate-600/50'
-                    }`}
+                {/* Desktop grid */}
+                <div className={`hidden sm:grid gap-6 ${
+                  categoryPlans.length <= 2
+                    ? 'grid-cols-2 max-w-3xl mx-auto'
+                    : categoryPlans.length === 3
+                      ? 'grid-cols-3'
+                      : 'grid-cols-2 lg:grid-cols-4'
+                }`}>
+                  {categoryPlans.map((plan, index) => (
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 24 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.08 }}
+                    >
+                      {renderPlanCard(plan)}
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Mobile carousel */}
+                <div className="sm:hidden relative">
+                  <div
+                    className="overflow-hidden touch-pan-y"
+                    onTouchStart={(e) => { setDragStart(e.touches[0].clientX); setIsDragging(true); }}
+                    onTouchEnd={(e) => {
+                      if (!isDragging || dragStart === null) return;
+                      handleSwipe(dragStart, e.changedTouches[0].clientX);
+                      setDragStart(null); setIsDragging(false);
+                    }}
                   >
-                    {plan.popular && (
-                      <div className="absolute -top-3.5 left-1/2 transform -translate-x-1/2 z-10">
-                        <span className={`px-5 py-1.5 rounded-full text-xs font-bold shadow-lg ${
-                          isChristmasMode
-                            ? 'bg-gradient-to-r from-red-500 to-green-500'
-                            : 'bg-gradient-to-r from-emerald-500 to-cyan-500'
-                        } text-white`}>
-                          Most Popular
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="p-6 sm:p-8">
-                      <div className="text-center mb-6">
-                        <div className={`bg-gradient-to-r ${plan.gradient} w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg`}>
-                          {getPlanIcon(plan.icon)}
+                    <motion.div
+                      className="flex"
+                      animate={{ x: `-${mobileSlide * 100}%` }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    >
+                      {categoryPlans.map((plan) => (
+                        <div key={plan.id} className="w-full flex-shrink-0 px-1">
+                          {renderPlanCard(plan)}
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-                      </div>
+                      ))}
+                    </motion.div>
+                  </div>
 
-                      <div className="text-center mb-6">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <span className="text-sm text-red-400 line-through">&#8377;{plan.mrp}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                            isChristmasMode
-                              ? 'bg-green-500/20 text-green-300 border border-green-500/50'
-                              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
-                          }`}>
-                            {plan.discountPercentage}% OFF
-                          </span>
-                        </div>
-                        <div className="text-4xl font-bold text-white">&#8377;{plan.price}</div>
-                        <p className="text-slate-400 text-sm mt-1">One-time payment</p>
-                      </div>
-
-                      <ul className="space-y-3 mb-6">
-                        {plan.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start">
-                            <Check className={`w-5 h-5 mr-2.5 mt-0.5 flex-shrink-0 ${
-                              isChristmasMode ? 'text-green-400' : 'text-emerald-400'
-                            }`} />
-                            <span className="text-slate-300 text-sm">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-
+                  {categoryPlans.length > 1 && (
+                    <>
                       <button
-                        onClick={() => {
-                          if (isAuthenticated) {
-                            onShowSubscriptionPlans(plan.id, false);
-                          } else {
-                            onShowAuth();
-                          }
-                        }}
-                        className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-                          plan.popular
-                            ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-400 hover:to-cyan-400 shadow-lg shadow-emerald-500/20'
-                            : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
+                        onClick={() => setMobileSlide(prev => Math.max(0, prev - 1))}
+                        disabled={mobileSlide === 0}
+                        className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all z-10 ${
+                          mobileSlide === 0
+                            ? 'bg-white/[0.04] border-white/[0.06] text-slate-600 cursor-not-allowed'
+                            : 'bg-white/[0.08] border-white/[0.12] text-white hover:bg-white/[0.15]'
                         }`}
                       >
-                        {isAuthenticated ? 'Select Plan' : 'Sign Up & Select'}
-                        <ArrowRight className="w-4 h-4" />
+                        <ChevronLeft className="w-5 h-5" />
                       </button>
+                      <button
+                        onClick={() => setMobileSlide(prev => Math.min(categoryPlans.length - 1, prev + 1))}
+                        disabled={mobileSlide === categoryPlans.length - 1}
+                        className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-xl border transition-all z-10 ${
+                          mobileSlide === categoryPlans.length - 1
+                            ? 'bg-white/[0.04] border-white/[0.06] text-slate-600 cursor-not-allowed'
+                            : 'bg-white/[0.08] border-white/[0.12] text-white hover:bg-white/[0.15]'
+                        }`}
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+
+                  {categoryPlans.length > 1 && (
+                    <div className="flex justify-center gap-2 mt-4">
+                      {categoryPlans.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setMobileSlide(i)}
+                          className={`transition-all duration-300 rounded-full ${
+                            mobileSlide === i
+                              ? 'w-8 h-2 bg-gradient-to-r from-emerald-400 to-cyan-400'
+                              : 'w-2 h-2 bg-white/[0.15] hover:bg-white/[0.25]'
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-2 text-xs text-slate-500">{mobileSlide + 1}/{categoryPlans.length}</span>
                     </div>
-                  </motion.div>
-                ))}
+                  )}
+                </div>
               </motion.div>
             </AnimatePresence>
 
