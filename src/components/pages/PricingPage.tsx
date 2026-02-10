@@ -188,13 +188,13 @@ export const PricingPage: React.FC<PricingPageProps> = ({
       <div className="relative z-10">
         <div className="container mx-auto px-4">
           {/* Mobile: horizontal scroll pills */}
-          <div className="sm:hidden mb-8 -mx-4">
-            <div className="flex gap-2 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <div className="sm:hidden mb-8">
+            <div className="grid grid-cols-2 gap-2">
               {CATEGORY_CONFIG.map((cat) => (
                 <button
                   key={cat.key}
                   onClick={() => handleCategoryChange(cat.key)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full border transition-all duration-300 whitespace-nowrap text-[13px] font-medium ${
+                  className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border transition-all duration-300 text-[13px] font-medium ${
                     activeCategory === cat.key
                       ? 'border-emerald-400/60 bg-emerald-500/20 text-emerald-300 shadow-[0_0_24px_rgba(16,185,129,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]'
                       : 'border-slate-500/30 bg-slate-700/40 text-slate-300'
